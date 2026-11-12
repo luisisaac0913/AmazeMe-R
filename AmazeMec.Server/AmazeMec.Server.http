@@ -1,0 +1,6 @@
+@AmazeMec.Server_HostAddress = http://localhost:5182
+
+GET {{AmazeMec.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

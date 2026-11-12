@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="amazemec.client/amazemec.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="AmazeMec.Server/AmazeMec.Server.csproj" />
+  <Project Path="AmazeMec.Tests/AmazeMec.Tests.csproj" />
+</Solution>
