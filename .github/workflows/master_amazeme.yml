@@ -72,3 +72,4 @@ jobs:
           app-name: 'amazeme'
           slot-name: 'Production'
           package: .
+
