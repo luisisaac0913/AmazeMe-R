@@ -253,7 +253,7 @@ namespace AmazeMec.Tests.Controllers
             await context.SaveChangesAsync();
 
             var controllerContext = TestControllerContext.Create();
-            controllerContext.HttpContext.Session.SetInt32("AmazingsPendientes", 50);
+            controllerContext.HttpContext.Session.SetInt32("AmazingsPendientes", 1);
 
             var controller = new AuthController(context)
             {
@@ -272,12 +272,12 @@ namespace AmazeMec.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<AuthUserResponse>(okResult.Value);
-            Assert.Equal(50, response.PuntosReclamados);
+            Assert.Equal(1, response.PuntosReclamados);
 
             // Check database points created
             var puntos = await context.Puntos.Include(p => p.Compra).FirstOrDefaultAsync(p => p.Compra!.UsuarioId == user.Id);
             Assert.NotNull(puntos);
-            Assert.Equal(50, puntos.PuntosObtenidos);
+            Assert.Equal(1, puntos.PuntosObtenidos);
         }
 
         [Fact]

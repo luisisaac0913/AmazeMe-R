@@ -31,7 +31,7 @@ export default function Recompensas() {
     };
   }, [refreshTrigger]);
 
-  const handleCanjear = async (costoPuntos, titulo) => {
+  const handleCanjear = async (recompensaId, costoPuntos, titulo) => {
     if (!balanceData || balanceData.balanceDisponible < costoPuntos) {
       setError(`No cuentas con suficientes Amazings para canjear ${titulo}.`);
       return;
@@ -42,7 +42,7 @@ export default function Recompensas() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ recompensaId: 1, costoPuntos })
+        body: JSON.stringify({ recompensaId, costoPuntos })
       });
 
       const data = await res.json();
@@ -135,7 +135,7 @@ export default function Recompensas() {
               <button
                 className="btn btn-outline-success rounded-pill w-100 py-2 fw-medium d-inline-flex align-items-center justify-content-center gap-1"
                 type="button"
-                onClick={() => handleCanjear(200, 'Bono Nivel 1 ($100 USD)')}
+                onClick={() => handleCanjear(1, 200, 'Bono Nivel 1 ($100 USD)')}
                 disabled={balance < 200}
               >
                 <span className="material-symbols-outlined fs-6">redeem</span>
@@ -171,7 +171,7 @@ export default function Recompensas() {
               <button
                 className="btn btn-success rounded-pill w-100 py-2 fw-medium text-white shadow-sm d-inline-flex align-items-center justify-content-center gap-1"
                 type="button"
-                onClick={() => handleCanjear(500, 'Bono Nivel 2 ($250 USD)')}
+                onClick={() => handleCanjear(2, 500, 'Bono Nivel 2 ($250 USD)')}
                 disabled={balance < 500}
               >
                 <span className="material-symbols-outlined fs-6">redeem</span>
@@ -207,7 +207,7 @@ export default function Recompensas() {
               <button
                 className="btn btn-outline-success rounded-pill w-100 py-2 fw-medium d-inline-flex align-items-center justify-content-center gap-1"
                 type="button"
-                onClick={() => handleCanjear(1000, 'Bono Elite ($500 USD)')}
+                onClick={() => handleCanjear(3, 1000, 'Bono Elite ($500 USD)')}
                 disabled={balance < 1000}
               >
                 <span className="material-symbols-outlined fs-6">redeem</span>
@@ -237,7 +237,11 @@ export default function Recompensas() {
                     <td>{new Date(item.fecha).toLocaleDateString()}</td>
                     <td>
                       {item.puntosObtenidos > 0 ? (
-                        <span className="text-success fw-medium">Bono o Compra Realizada</span>
+                        item.montoCompra > 0 ? (
+                          <span className="text-success fw-medium">Compra (${item.montoCompra.toFixed(2)})</span>
+                        ) : (
+                          <span className="text-success fw-medium">Bono diario de encuesta</span>
+                        )
                       ) : (
                         <span className="text-danger fw-medium">Canje de Recompensa</span>
                       )}

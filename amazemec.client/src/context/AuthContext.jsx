@@ -38,6 +38,32 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  const parseAuthResponse = async (response, fallbackError) => {
+    if (response.status === 429) {
+      throw new Error('Demasiados intentos. Por favor espera un momento e inténtalo de nuevo.');
+    }
+
+    const rawText = await response.text();
+    let data = null;
+    if (rawText) {
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = null;
+      }
+    }
+
+    if (!response.ok) {
+      const validationError =
+        data?.errors && typeof data.errors === 'object'
+          ? Object.values(data.errors).flat().find(Boolean)
+          : null;
+      throw new Error(data?.error || validationError || fallbackError);
+    }
+
+    return data;
+  };
+
   const login = async (identificador, contraseña, ultimaRespuestaId = null) => {
     const payload = { identificador, contraseña };
     if (ultimaRespuestaId) payload.ultimaRespuestaId = ultimaRespuestaId;
@@ -49,11 +75,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Usuario o contraseña incorrectos.');
-    }
-
+    const data = await parseAuthResponse(response, 'Usuario o contraseña incorrectos.');
     setUser(data);
     return data;
   };
@@ -69,11 +91,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Error al crear la cuenta.');
-    }
-
+    const data = await parseAuthResponse(response, 'Error al crear la cuenta.');
     setUser(data);
     return data;
   };
@@ -96,10 +114,7 @@ export function AuthProvider({ children }) {
       credentials: 'include',
       body: JSON.stringify({ nombre, email })
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Error al actualizar perfil.');
-    }
+    const data = await parseAuthResponse(response, 'Error al actualizar perfil.');
     setUser(data);
     return data;
   };
@@ -111,11 +126,7 @@ export function AuthProvider({ children }) {
       credentials: 'include',
       body: JSON.stringify({ contraseñaActual, contraseñaNueva, confirmarContraseñaNueva })
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Error al cambiar contraseña.');
-    }
-    return data;
+    return await parseAuthResponse(response, 'Error al cambiar contraseña.');
   };
 
   return (

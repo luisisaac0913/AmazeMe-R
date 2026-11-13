@@ -29,7 +29,11 @@ export default function Login() {
     try {
       const data = await login(identificador, contraseña, ultimaRespuestaId ? parseInt(ultimaRespuestaId) : null);
       if (data.puntosReclamados) {
-        setPuntosReclamadosMsg(`¡Has reclamado tus ${data.puntosReclamados} Amazings pendientes con éxito!`);
+        setPuntosReclamadosMsg(
+          data.puntosReclamados === 1
+            ? '¡Has reclamado tu 1 Amazing pendiente con éxito!'
+            : `¡Has reclamado tus ${data.puntosReclamados} Amazings pendientes con éxito!`
+        );
         setTimeout(() => {
           navigate(returnUrl);
         }, 1200);

@@ -13,7 +13,7 @@ namespace AmazeMec.Server.Controllers
     public class CuestionarioController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private const int MaxBonoEncuesta = 50;
+        private const int MaxBonoEncuesta = 1;
 
         public CuestionarioController(AppDbContext context)
         {
@@ -82,7 +82,7 @@ namespace AmazeMec.Server.Controllers
                     MostrarModalPendientes = true,
                     AmazingsPendientes = MaxBonoEncuesta,
                     PuntosGanados = 0,
-                    Mensaje = "Cuestionario guardado con éxito. Inicia sesión o regístrate para reclamar tus 50 Amazings."
+                    Mensaje = "Cuestionario guardado con éxito. Inicia sesión o regístrate para reclamar tu Amazing pendiente."
                 });
             }
 
@@ -90,8 +90,12 @@ namespace AmazeMec.Server.Controllers
             int puntosAcreditados = 0;
             try
             {
-                bool yaRecompensadoHoy = await _context.Compras
-                    .AnyAsync(c => c.UsuarioId == usuarioId.Value && c.Monto == 0 && c.FechaCompra >= DateTime.Today);
+                bool yaRecompensadoHoy = await _context.Puntos
+                    .AnyAsync(p => p.Compra != null
+                        && p.Compra.UsuarioId == usuarioId.Value
+                        && p.Compra.Monto == 0
+                        && p.PuntosObtenidos > 0
+                        && p.Compra.FechaCompra >= DateTime.Today);
 
                 if (!yaRecompensadoHoy)
                 {
@@ -130,7 +134,7 @@ namespace AmazeMec.Server.Controllers
                 AmazingsPendientes = 0,
                 PuntosGanados = puntosAcreditados,
                 Mensaje = puntosAcreditados > 0
-                    ? $"¡Has ganado {puntosAcreditados} Amazings por completar el cuestionario de hoy!"
+                    ? $"¡Has ganado {puntosAcreditados} Amazing por completar el cuestionario de hoy!"
                     : "Cuestionario guardado exitosamente."
             });
         }

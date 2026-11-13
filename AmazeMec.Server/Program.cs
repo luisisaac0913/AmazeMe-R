@@ -118,7 +118,22 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async contexto =>
+        {
+            contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            if (contexto.Request.Path.StartsWithSegments("/api"))
+            {
+                contexto.Response.ContentType = "application/json";
+                await contexto.Response.WriteAsJsonAsync(new { error = "Ocurrió un error interno en el servidor." });
+            }
+            else
+            {
+                contexto.Response.Redirect("/");
+            }
+        });
+    });
     app.UseHsts();
 }
 

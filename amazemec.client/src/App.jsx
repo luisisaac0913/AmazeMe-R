@@ -1,6 +1,7 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import CookieConsent from './components/CookieConsent';
 import ProtectedRoute from './components/ProtectedRoute';
 import Menu from './pages/Menu';
 import Cuestionario from './pages/Cuestionario';
@@ -12,10 +13,13 @@ import Terminos from './pages/Terminos';
 import Privacidad from './pages/Privacidad';
 
 export default function App() {
+  const location = useLocation();
+  const isAuthRoute = location.pathname === '/entrar' || location.pathname === '/registrar';
+
   return (
     <div className="d-flex flex-column min-vh-100">
-      <Navbar />
-      <main className="flex-grow-1">
+      {!isAuthRoute && <Navbar />}
+      <main className={`flex-grow-1 ${isAuthRoute ? 'd-flex align-items-center justify-content-center bg-light' : ''}`}>
         <Routes>
           <Route path="/" element={<Menu />} />
           <Route path="/menu" element={<Navigate to="/" replace />} />
@@ -43,7 +47,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthRoute && <Footer />}
+      <CookieConsent />
     </div>
   );
 }

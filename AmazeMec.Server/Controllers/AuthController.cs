@@ -18,7 +18,7 @@ namespace AmazeMec.Server.Controllers
     {
         private readonly AppDbContext _context;
         private const string HashFalso = "$2a$11$000000000000000000000u6/gQp5jR9m7/k6V1h3o9h0Z6m1W3m9O";
-        private const int MaxBonoReclamable = 50;
+        private const int MaxBonoReclamable = 1;
 
         public AuthController(AppDbContext context)
         {
@@ -300,8 +300,12 @@ namespace AmazeMec.Server.Controllers
             int puntosReclamables = Math.Min(puntos, MaxBonoReclamable);
             try
             {
-                bool yaRecompensadoHoy = await _context.Compras
-                    .AnyAsync(c => c.UsuarioId == usuarioId && c.Monto == 0 && c.FechaCompra >= DateTime.Today);
+                bool yaRecompensadoHoy = await _context.Puntos
+                    .AnyAsync(p => p.Compra != null
+                        && p.Compra.UsuarioId == usuarioId
+                        && p.Compra.Monto == 0
+                        && p.PuntosObtenidos > 0
+                        && p.Compra.FechaCompra >= DateTime.Today);
 
                 if (!yaRecompensadoHoy)
                 {
