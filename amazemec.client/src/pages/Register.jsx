@@ -26,6 +26,11 @@ export default function Register() {
       return;
     }
 
+    if (nombre.trim().length > 50) {
+      setError('El nombre de usuario no puede superar los 50 caracteres.');
+      return;
+    }
+
     if (contraseña !== confirmarContraseña) {
       setError('Las contraseñas no coinciden.');
       return;
@@ -98,6 +103,7 @@ export default function Register() {
                   type="email"
                   className="form-control"
                   placeholder="ejemplo@correo.com"
+                  maxLength={100}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -110,6 +116,7 @@ export default function Register() {
                   type="text"
                   className="form-control"
                   placeholder="Elige un nombre de usuario"
+                  maxLength={50}
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   required

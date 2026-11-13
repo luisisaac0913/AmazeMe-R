@@ -128,6 +128,111 @@ namespace AmazeMec.Tests.Controllers
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
+
+        [Fact]
+        public async Task Canjear_CostoManipuladoPorCliente_UsaCostoOficialDelServidor()
+        {
+            // Arrange
+            var context = TestDbContextFactory.Create();
+            var user = new Usuario { Nombre = "UserManipula", Email = "manipula@gmail.com", Contraseña = "hash" };
+            context.Usuario.Add(user);
+
+            var compra = new Compra { UsuarioId = user.Id, FechaCompra = DateTime.Now, Monto = 0, Cantidad = 1, Usuario = user };
+            context.Compras.Add(compra);
+            context.Puntos.Add(new Puntos { PuntosObtenidos = 500, PuntosGastados = 0, Compra = compra });
+            await context.SaveChangesAsync();
+
+            var controller = new RecompensasController(context)
+            {
+                ControllerContext = TestControllerContext.Create(user.Id, user.Nombre, user.Email)
+            };
+
+            var request = new CanjeRecompensaRequest
+            {
+                RecompensaId = 1, // Bono Nivel 1 cuesta 200 oficialmente
+                CostoPuntos = 1   // Intento de manipulación
+            };
+
+            // Act
+            var result = await controller.Canjear(request);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var gasto = await context.Puntos.FirstOrDefaultAsync(p => p.PuntosGastados == 200);
+            Assert.NotNull(gasto);
+        }
+
+        [Fact]
+        public async Task Canjear_RecompensaInexistente_RetornaBadRequest()
+        {
+            // Arrange
+            var context = TestDbContextFactory.Create();
+            var user = new Usuario { Nombre = "UserInvalido", Email = "invalido@gmail.com", Contraseña = "hash" };
+            context.Usuario.Add(user);
+            await context.SaveChangesAsync();
+
+            var controller = new RecompensasController(context)
+            {
+                ControllerContext = TestControllerContext.Create(user.Id, user.Nombre, user.Email)
+            };
+
+            var request = new CanjeRecompensaRequest
+            {
+                RecompensaId = 999,
+                CostoPuntos = 10
+            };
+
+            // Act
+            var result = await controller.Canjear(request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Theory]
+        [InlineData(100, 5)]
+        [InlineData(250, 12)]
+        [InlineData(19.99, 0)]
+        [InlineData(0, 0)]
+        public void CalcularPuntosCompra_MantieneProporcionCincoPorCiento(decimal monto, int esperado)
+        {
+            Assert.Equal(esperado, RecompensasController.CalcularPuntosCompra(monto));
+        }
+
+        [Fact]
+        public async Task RegistrarCompra_CalculaCincoPorCientoYApareceEnHistorial()
+        {
+            // Arrange
+            var context = TestDbContextFactory.Create();
+            var user = new Usuario { Nombre = "UserCompra", Email = "compra@gmail.com", Contraseña = "hash" };
+            context.Usuario.Add(user);
+            await context.SaveChangesAsync();
+
+            var controller = new RecompensasController(context)
+            {
+                ControllerContext = TestControllerContext.Create(user.Id, user.Nombre, user.Email)
+            };
+
+            var request = new RegistrarCompraRequest
+            {
+                Monto = 400m,
+                Cantidad = 2
+            };
+
+            // Act
+            var compraResult = await controller.RegistrarCompra(request);
+            var balanceResult = await controller.ObtenerBalance();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(compraResult);
+            var okBalance = Assert.IsType<OkObjectResult>(balanceResult);
+            var balance = Assert.IsType<BalanceResponse>(okBalance.Value);
+
+            Assert.Equal(20, balance.BalanceDisponible);
+            Assert.Single(balance.Historial);
+            Assert.Equal(400m, balance.Historial[0].MontoCompra);
+            Assert.Equal(20, balance.Historial[0].PuntosObtenidos);
+        }
     }
 }
 

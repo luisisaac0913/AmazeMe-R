@@ -72,16 +72,24 @@ namespace AmazeMec.Server.Controllers
             }
         }
 
+        private static readonly Dictionary<int, (string Titulo, int Costo, string Descripcion, string Categoria)> CatalogoOficial = new()
+        {
+            { 1, ("Bono Nivel 1 - $100 USD", 200, "Recibe un total de $100.00 dólares por cada 200 Amazings acumulados en tu cuenta.", "Bono") },
+            { 2, ("Bono Nivel 2 - $250 USD", 500, "Recibe un total de $250.00 dólares por cada 500 Amazings acumulados en tu cuenta.", "Bono") },
+            { 3, ("Bono Elite - $500 USD", 1000, "Recibe un total de $500.00 dólares por cada 1000 Amazings acumulados en tu cuenta.", "Bono") }
+        };
+
         [HttpGet("catalogo")]
         public IActionResult ObtenerCatalogo()
         {
-            var catalogo = new[]
+            var catalogo = CatalogoOficial.Select(kvp => new
             {
-                new { id = 1, titulo = "Cupón de Descuento 10%", costo = 100, descripcion = "Válido en tiendas afiliadas para compras mayores a $500 MXN.", categoria = "Descuento" },
-                new { id = 2, titulo = "Tarjeta de Regalo $100 MXN", costo = 250, descripcion = "Canjeable en comercios electrónicos asociados.", categoria = "Tarjeta" },
-                new { id = 3, titulo = "Tarjeta de Regalo $250 MXN", costo = 500, descripcion = "Saldo directo para canjear en tus compras de regalos.", categoria = "Tarjeta" },
-                new { id = 4, titulo = "Envío Gratis por 1 Mes", costo = 150, descripcion = "Envíos nacionales sin costo en tiendas participantes.", categoria = "Envío" }
-            };
+                id = kvp.Key,
+                titulo = kvp.Value.Titulo,
+                costo = kvp.Value.Costo,
+                descripcion = kvp.Value.Descripcion,
+                categoria = kvp.Value.Categoria
+            });
 
             return Ok(catalogo);
         }
@@ -93,10 +101,12 @@ namespace AmazeMec.Server.Controllers
             int? usuarioId = ObtenerUsuarioId();
             if (usuarioId == null) return Unauthorized();
 
-            if (request.CostoPuntos <= 0)
+            if (!CatalogoOficial.TryGetValue(request.RecompensaId, out var recompensa))
             {
-                return BadRequest(new { error = "El costo de puntos debe ser mayor a 0." });
+                return BadRequest(new { error = "La recompensa seleccionada no existe." });
             }
+
+            int costoReal = recompensa.Costo;
 
             var puntosUsuario = await _context.Puntos
                 .Include(p => p.Compra)
@@ -104,7 +114,7 @@ namespace AmazeMec.Server.Controllers
                 .ToListAsync();
 
             int balanceActual = puntosUsuario.Sum(p => p.PuntosObtenidos - p.PuntosGastados);
-            if (balanceActual < request.CostoPuntos)
+            if (balanceActual < costoReal)
             {
                 return BadRequest(new { error = "No cuentas con suficientes Amazings para este canje." });
             }
@@ -122,7 +132,7 @@ namespace AmazeMec.Server.Controllers
             var gastoPuntos = new Puntos
             {
                 PuntosObtenidos = 0,
-                PuntosGastados = request.CostoPuntos,
+                PuntosGastados = costoReal,
                 CompraId = compraCanje.Id
             };
             _context.Puntos.Add(gastoPuntos);
@@ -130,9 +140,60 @@ namespace AmazeMec.Server.Controllers
 
             return Ok(new
             {
-                mensaje = "Canje realizado con éxito.",
-                nuevoBalance = balanceActual - request.CostoPuntos
+                mensaje = $"Canje realizado con éxito: {recompensa.Titulo}.",
+                nuevoBalance = balanceActual - costoReal
             });
+        }
+
+        [Authorize]
+        [HttpPost("compra")]
+        public async Task<IActionResult> RegistrarCompra([FromBody] RegistrarCompraRequest request)
+        {
+            int? usuarioId = ObtenerUsuarioId();
+            if (usuarioId == null) return Unauthorized();
+
+            if (request.Monto <= 0 || request.Cantidad <= 0)
+            {
+                return BadRequest(new { error = "El monto y la cantidad de la compra deben ser mayores a 0." });
+            }
+
+            // Proporción de 5/100 sobre el monto de compra
+            int puntosGenerados = CalcularPuntosCompra(request.Monto);
+
+            var compra = new Compra
+            {
+                FechaCompra = DateTime.Now,
+                Monto = request.Monto,
+                Cantidad = request.Cantidad,
+                UsuarioId = usuarioId.Value
+            };
+            _context.Compras.Add(compra);
+            await _context.SaveChangesAsync();
+
+            if (puntosGenerados > 0)
+            {
+                var registroPuntos = new Puntos
+                {
+                    PuntosObtenidos = puntosGenerados,
+                    PuntosGastados = 0,
+                    CompraId = compra.Id
+                };
+                _context.Puntos.Add(registroPuntos);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                compraId = compra.Id,
+                monto = compra.Monto,
+                puntosObtenidos = puntosGenerados
+            });
+        }
+
+        public static int CalcularPuntosCompra(decimal monto)
+        {
+            if (monto <= 0) return 0;
+            return (int)Math.Floor(monto * 5m / 100m);
         }
     }
 }

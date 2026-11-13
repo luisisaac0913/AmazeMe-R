@@ -11,7 +11,7 @@ namespace AmazeMec.Tests.Controllers
     public class CuestionarioControllerTests
     {
         [Fact]
-        public async Task EnviarCuestionario_UsuarioAnonimo_Retorna50AmazingsPendientes()
+        public async Task EnviarCuestionario_UsuarioAnonimo_Retorna1AmazingPendiente()
         {
             // Arrange
             var context = TestDbContextFactory.Create();
@@ -41,7 +41,7 @@ namespace AmazeMec.Tests.Controllers
             var response = Assert.IsType<CuestionarioResponse>(okResult.Value);
             Assert.True(response.EsAnonimo);
             Assert.True(response.MostrarModalPendientes);
-            Assert.Equal(50, response.AmazingsPendientes);
+            Assert.Equal(1, response.AmazingsPendientes);
             Assert.Equal(0, response.PuntosGanados);
 
             // Verifica que se guardó en base de datos con UsuarioId nulo
@@ -52,7 +52,7 @@ namespace AmazeMec.Tests.Controllers
         }
 
         [Fact]
-        public async Task EnviarCuestionario_UsuarioAutenticado_AcreditaBonoDiario50Amazings()
+        public async Task EnviarCuestionario_UsuarioAutenticado_AcreditaBonoDiario1Amazing()
         {
             // Arrange
             var context = TestDbContextFactory.Create();
@@ -88,12 +88,12 @@ namespace AmazeMec.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<CuestionarioResponse>(okResult.Value);
             Assert.False(response.EsAnonimo);
-            Assert.Equal(50, response.PuntosGanados);
+            Assert.Equal(1, response.PuntosGanados);
 
             // Verifica registro en Compras y Puntos
             var puntos = await context.Puntos.Include(p => p.Compra).FirstOrDefaultAsync(p => p.Compra!.UsuarioId == user.Id);
             Assert.NotNull(puntos);
-            Assert.Equal(50, puntos.PuntosObtenidos);
+            Assert.Equal(1, puntos.PuntosObtenidos);
         }
 
         [Fact]
@@ -189,6 +189,58 @@ namespace AmazeMec.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public async Task EnviarCuestionario_ConCanjeHoy_NoBloqueaBonoDiario()
+        {
+            // Arrange
+            var context = TestDbContextFactory.Create();
+            var user = new Usuario { Nombre = "UserCanjeHoy", Email = "canjehoy@gmail.com", Contraseña = "hash" };
+            context.Usuario.Add(user);
+            await context.SaveChangesAsync();
+
+            var canjeCompra = new Compra
+            {
+                UsuarioId = user.Id,
+                FechaCompra = DateTime.Now,
+                Monto = 0,
+                Cantidad = 1
+            };
+            context.Compras.Add(canjeCompra);
+            await context.SaveChangesAsync();
+
+            context.Puntos.Add(new Puntos
+            {
+                PuntosObtenidos = 0,
+                PuntosGastados = 200,
+                CompraId = canjeCompra.Id
+            });
+            await context.SaveChangesAsync();
+
+            var controller = new CuestionarioController(context)
+            {
+                ControllerContext = TestControllerContext.Create(user.Id, user.Nombre, user.Email)
+            };
+
+            var request = new CuestionarioRequest
+            {
+                Relacion = "Pareja",
+                Ocasion = "Cumpleaños",
+                Edad = 25,
+                Pasatiempos = "Lectura",
+                Personalidad = "Práctico",
+                Presupuesto = 500,
+                Dias = 7
+            };
+
+            // Act
+            var result = await controller.EnviarCuestionario(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<CuestionarioResponse>(okResult.Value);
+            Assert.Equal(1, response.PuntosGanados);
         }
     }
 }

@@ -1,20 +1,25 @@
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     await logout();
     navigate('/entrar');
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header>
       <nav className="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top">
         <div className="container">
-          <Link to="/" className="navbar-brand d-inline-flex align-items-center py-0 fw-bold fs-5 text-dark me-4">
+          <Link to="/" onClick={closeMenu} className="navbar-brand d-inline-flex align-items-center py-0 fw-bold fs-5 text-dark me-4">
             <img
               src="/Images/Iconos/Amazeme_logo.png"
               alt="AmazeMe"
@@ -30,20 +35,22 @@ export default function Navbar() {
           <button
             className="navbar-toggler border-0 shadow-none p-1"
             type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navMenuAmaze"
+            onClick={() => setMenuOpen((prev) => !prev)}
             aria-controls="navMenuAmaze"
-            aria-expanded="false"
+            aria-expanded={menuOpen}
             aria-label="Abrir menú"
           >
-            <span className="material-symbols-outlined fs-2 text-dark">menu</span>
+            <span className="material-symbols-outlined fs-2 text-dark">
+              {menuOpen ? 'close' : 'menu'}
+            </span>
           </button>
 
-          <div className="collapse navbar-collapse" id="navMenuAmaze">
+          <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`} id="navMenuAmaze">
             <ul className="navbar-nav ms-auto align-items-center gap-1 my-2 my-md-0">
               <li className="nav-item">
                 <NavLink
                   to="/"
+                  onClick={closeMenu}
                   className={({ isActive }) => `nav-link nav-link-custom ${isActive ? 'active' : ''}`}
                   end
                 >
@@ -57,6 +64,7 @@ export default function Navbar() {
               <li className="nav-item">
                 <NavLink
                   to="/cuestionario"
+                  onClick={closeMenu}
                   className={({ isActive }) => `nav-link nav-link-custom ${isActive ? 'active' : ''}`}
                 >
                   <span className="d-inline-flex align-items-center gap-1">
@@ -69,6 +77,7 @@ export default function Navbar() {
               <li className="nav-item">
                 <NavLink
                   to="/recompensas"
+                  onClick={closeMenu}
                   className={({ isActive }) => `badge-recompensas text-decoration-none ${isActive ? 'active' : ''}`}
                 >
                   <span className="material-symbols-outlined fs-6 me-1">stars</span>
@@ -81,6 +90,7 @@ export default function Navbar() {
                   <li className="nav-item ms-md-2">
                     <NavLink
                       to="/perfil"
+                      onClick={closeMenu}
                       className="nav-link nav-link-custom d-flex align-items-center gap-2"
                       title="Mi Perfil"
                     >
@@ -105,6 +115,7 @@ export default function Navbar() {
                   <li className="nav-item ms-md-2">
                     <NavLink
                       to="/entrar"
+                      onClick={closeMenu}
                       className="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-medium"
                     >
                       Iniciar sesión
@@ -113,6 +124,7 @@ export default function Navbar() {
                   <li className="nav-item">
                     <NavLink
                       to="/registrar"
+                      onClick={closeMenu}
                       className="btn btn-success btn-sm rounded-pill px-3 py-1 fw-medium text-white shadow-sm"
                     >
                       Registrarse

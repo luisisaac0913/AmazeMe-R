@@ -22,5 +22,11 @@ namespace AmazeMec.Server.DTOs
         public int RecompensaId { get; set; }
         public int CostoPuntos { get; set; }
     }
+
+    public class RegistrarCompraRequest
+    {
+        public decimal Monto { get; set; }
+        public int Cantidad { get; set; } = 1;
+    }
 }
 

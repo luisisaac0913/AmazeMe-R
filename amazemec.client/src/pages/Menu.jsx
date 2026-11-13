@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 
 export default function Menu() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const toggleFaq = (id) => {
+    setOpenFaq((prev) => (prev === id ? null : id));
+  };
 
   const slides = [
     {
@@ -305,15 +310,18 @@ export default function Menu() {
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
               <h2 className="accordion-header">
                 <button
-                  className="accordion-button collapsed fw-medium text-dark"
+                  className={`accordion-button fw-medium text-dark ${openFaq === 'faqPrivacidad' ? '' : 'collapsed'}`}
                   type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#faqPrivacidad"
+                  aria-expanded={openFaq === 'faqPrivacidad'}
+                  onClick={() => toggleFaq('faqPrivacidad')}
                 >
                   Privacidad y uso de información
                 </button>
               </h2>
-              <div id="faqPrivacidad" className="accordion-collapse collapse" data-bs-parent="#SPreguntas">
+              <div
+                id="faqPrivacidad"
+                className={`accordion-collapse collapse ${openFaq === 'faqPrivacidad' ? 'show' : ''}`}
+              >
                 <div className="accordion-body text-muted small bg-white">
                   Consulta nuestro apartado de{' '}
                   <Link to="/privacidad" className="fw-medium text-success text-decoration-none">
@@ -327,17 +335,20 @@ export default function Menu() {
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
               <h2 className="accordion-header">
                 <button
-                  className="accordion-button collapsed fw-medium text-dark"
+                  className={`accordion-button fw-medium text-dark ${openFaq === 'faqAmazings' ? '' : 'collapsed'}`}
                   type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#faqAmazings"
+                  aria-expanded={openFaq === 'faqAmazings'}
+                  onClick={() => toggleFaq('faqAmazings')}
                 >
                   ¿Cómo funcionan los Amazings?
                 </button>
               </h2>
-              <div id="faqAmazings" className="accordion-collapse collapse" data-bs-parent="#SPreguntas">
+              <div
+                id="faqAmazings"
+                className={`accordion-collapse collapse ${openFaq === 'faqAmazings' ? 'show' : ''}`}
+              >
                 <div className="accordion-body text-muted small bg-white">
-                  Los Amazings son los puntos de recompensa de AmazeMe. Cada compra confirmada te entrega un porcentaje que podrás ver reflejado en tu cuenta para canjear en la pestaña de{' '}
+                  Los Amazings son los puntos de recompensa de AmazeMe. Cada compra confirmada te entrega un 5% en Amazings (5/100 del monto) y puedes obtener hasta 1 Amazing diario por el cuestionario gratuito para canjear en la pestaña de{' '}
                   <Link to="/recompensas" className="fw-medium text-success text-decoration-none">
                     Recompensas
                   </Link>.
@@ -348,15 +359,18 @@ export default function Menu() {
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
               <h2 className="accordion-header">
                 <button
-                  className="accordion-button collapsed fw-medium text-dark"
+                  className={`accordion-button fw-medium text-dark ${openFaq === 'faqDatos' ? '' : 'collapsed'}`}
                   type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#faqDatos"
+                  aria-expanded={openFaq === 'faqDatos'}
+                  onClick={() => toggleFaq('faqDatos')}
                 >
                   ¿Qué datos solicita AmazeMe para operar?
                 </button>
               </h2>
-              <div id="faqDatos" className="accordion-collapse collapse" data-bs-parent="#SPreguntas">
+              <div
+                id="faqDatos"
+                className={`accordion-collapse collapse ${openFaq === 'faqDatos' ? 'show' : ''}`}
+              >
                 <div className="accordion-body text-muted small bg-white">
                   Únicamente solicitamos tu nombre de usuario, correo electrónico y una contraseña encriptada de forma segura para gestionar tus favoritos y tu balance acumulado de puntos.
                 </div>
@@ -366,15 +380,18 @@ export default function Menu() {
             <div className="accordion-item border rounded-3 overflow-hidden">
               <h2 className="accordion-header">
                 <button
-                  className="accordion-button collapsed fw-medium text-dark"
+                  className={`accordion-button fw-medium text-dark ${openFaq === 'faqCompras' ? '' : 'collapsed'}`}
                   type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#faqCompras"
+                  aria-expanded={openFaq === 'faqCompras'}
+                  onClick={() => toggleFaq('faqCompras')}
                 >
                   ¿Cómo se registran las compras?
                 </button>
               </h2>
-              <div id="faqCompras" className="accordion-collapse collapse" data-bs-parent="#SPreguntas">
+              <div
+                id="faqCompras"
+                className={`accordion-collapse collapse ${openFaq === 'faqCompras' ? 'show' : ''}`}
+              >
                 <div className="accordion-body text-muted small bg-white">
                   Las compras se vinculan a través de los enlaces recomendados por la plataforma. Te sugerimos revisar las condiciones en el módulo de Recompensas antes de realizar tus transacciones.
                 </div>
