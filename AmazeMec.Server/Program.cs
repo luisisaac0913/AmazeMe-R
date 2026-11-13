@@ -17,9 +17,15 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // 2. Base de Datos (Entity Framework Core)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    connectionString = builder.Configuration["DefaultConnection"];
+}
+
 builder.Services.AddDbContext<AppDbContext>(opciones =>
     opciones.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         opcionesSql => opcionesSql.EnableRetryOnFailure()));
 
 // 3. Caché y Sesión para estado anónimo temporal (Amazings pendientes)
@@ -122,6 +128,13 @@ else
     {
         errorApp.Run(async contexto =>
         {
+            var feature = contexto.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            if (feature?.Error != null)
+            {
+                var logger = contexto.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(feature.Error, "Excepción no controlada en {Path}", contexto.Request.Path);
+            }
+
             contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
             if (contexto.Request.Path.StartsWithSegments("/api"))
             {
