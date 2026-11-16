@@ -7,11 +7,13 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const returnUrl = searchParams.get('returnUrl') || '/';
+  const rawReturnUrl = searchParams.get('returnUrl') || '/';
+  const returnUrl = rawReturnUrl.startsWith('/') && !rawReturnUrl.startsWith('//') ? rawReturnUrl : '/';
   const ultimaRespuestaId = searchParams.get('ultimaRespuestaId') || null;
 
   const [identificador, setIdentificador] = useState('');
   const [contraseña, setContraseña] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [puntosReclamadosMsg, setPuntosReclamadosMsg] = useState(null);
@@ -86,8 +88,9 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
-                <label className="form-label small fw-semibold text-secondary">Usuario o correo electrónico</label>
+                <label htmlFor="loginIdentificador" className="form-label small fw-semibold text-secondary">Usuario o correo electrónico</label>
                 <input
+                  id="loginIdentificador"
                   type="text"
                   className="form-control"
                   placeholder="Ingresa tu usuario o correo"
@@ -99,15 +102,29 @@ export default function Login() {
               </div>
 
               <div className="mb-4">
-                <label className="form-label small fw-semibold text-secondary">Contraseña</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="Ingresa tu contraseña"
-                  value={contraseña}
-                  onChange={(e) => setContraseña(e.target.value)}
-                  required
-                />
+                <label htmlFor="loginPassword" className="form-label small fw-semibold text-secondary">Contraseña</label>
+                <div className="input-group">
+                  <input
+                    id="loginPassword"
+                    type={mostrarPassword ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="Ingresa tu contraseña"
+                    value={contraseña}
+                    onChange={(e) => setContraseña(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary d-inline-flex align-items-center px-3"
+                    style={{ borderRadius: '0 8px 8px 0' }}
+                    onClick={() => setMostrarPassword((prev) => !prev)}
+                    aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    <span className="material-symbols-outlined fs-5">
+                      {mostrarPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <div className="d-flex justify-content-between align-items-center mb-4">

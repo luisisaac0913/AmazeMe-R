@@ -17,12 +17,14 @@ namespace AmazeMec.Server.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<AuthController>? _logger;
         private const string HashFalso = "$2a$11$000000000000000000000u6/gQp5jR9m7/k6V1h3o9h0Z6m1W3m9O";
         private const int MaxBonoReclamable = 1;
 
-        public AuthController(AppDbContext context)
+        public AuthController(AppDbContext context, ILogger<AuthController>? logger = null)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -135,7 +137,7 @@ namespace AmazeMec.Server.Controllers
                 Nombre = nombreLimpio,
                 Email = emailLimpio,
                 Contraseña = BCrypt.Net.BCrypt.HashPassword(request.Contraseña),
-                Fecharegistro = DateTime.Now
+                Fecharegistro = DateTime.UtcNow
             };
 
             _context.Usuario.Add(nuevoUsuario);
@@ -253,7 +255,11 @@ namespace AmazeMec.Server.Controllers
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(new ClaimsIdentity(reclamos, CookieAuthenticationDefaults.AuthenticationScheme)),
-                new AuthenticationProperties { IsPersistent = true });
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
+                });
 
             return Ok(new AuthUserResponse
             {
@@ -295,6 +301,49 @@ namespace AmazeMec.Server.Controllers
             return Ok(new { mensaje = "Contraseña actualizada con éxito." });
         }
 
+        [Authorize]
+        [HttpDelete("cuenta")]
+        public async Task<IActionResult> EliminarCuenta()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            var usuario = await _context.Usuario.FindAsync(userId);
+            if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+
+            var respuestas = await _context.RespuestaCuestionario
+                .Where(r => r.UsuarioId == userId)
+                .ToListAsync();
+            if (respuestas.Count > 0)
+            {
+                _context.RespuestaCuestionario.RemoveRange(respuestas);
+            }
+
+            var compras = await _context.Compras
+                .Where(c => c.UsuarioId == userId)
+                .ToListAsync();
+            if (compras.Count > 0)
+            {
+                var compraIds = compras.Select(c => c.Id).ToList();
+                var puntos = await _context.Puntos
+                    .Where(p => compraIds.Contains(p.CompraId))
+                    .ToListAsync();
+                if (puntos.Count > 0)
+                {
+                    _context.Puntos.RemoveRange(puntos);
+                }
+                _context.Compras.RemoveRange(compras);
+            }
+
+            _context.Usuario.Remove(usuario);
+            await _context.SaveChangesAsync();
+
+            HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return Ok(new { mensaje = "Cuenta y datos asociados eliminados permanentemente." });
+        }
+
         private async Task<int> ReclamarPuntosPendientesInterno(int usuarioId, int puntos, int? ultimaRespuestaId)
         {
             int puntosReclamables = Math.Min(puntos, MaxBonoReclamable);
@@ -305,7 +354,7 @@ namespace AmazeMec.Server.Controllers
                         && p.Compra.UsuarioId == usuarioId
                         && p.Compra.Monto == 0
                         && p.PuntosObtenidos > 0
-                        && p.Compra.FechaCompra >= DateTime.Today);
+                        && p.Compra.FechaCompra >= DateTime.UtcNow.Date);
 
                 if (!yaRecompensadoHoy)
                 {
@@ -320,7 +369,7 @@ namespace AmazeMec.Server.Controllers
 
                     var compraRecompensa = new Compra
                     {
-                        FechaCompra = DateTime.Now,
+                        FechaCompra = DateTime.UtcNow,
                         Monto = 0,
                         Cantidad = 1,
                         UsuarioId = usuarioId
@@ -343,8 +392,9 @@ namespace AmazeMec.Server.Controllers
                     return puntosReclamables;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogWarning(ex, "No se pudieron reclamar los puntos pendientes para el usuario {UsuarioId}", usuarioId);
             }
             return 0;
         }

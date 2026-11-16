@@ -4,6 +4,7 @@ using AmazeMec.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Security.Claims;
 
 namespace AmazeMec.Server.Controllers
@@ -13,10 +14,12 @@ namespace AmazeMec.Server.Controllers
     public class RecompensasController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<RecompensasController>? _logger;
 
-        public RecompensasController(AppDbContext context)
+        public RecompensasController(AppDbContext context, ILogger<RecompensasController>? logger = null)
         {
             _context = context;
+            _logger = logger;
         }
 
         private int? ObtenerUsuarioId()
@@ -68,7 +71,8 @@ namespace AmazeMec.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Error al calcular el balance.", detalle = ex.Message });
+                _logger?.LogError(ex, "Error al calcular el balance para el usuario {UsuarioId}", usuarioId.Value);
+                return StatusCode(500, new { error = "Error al calcular el balance." });
             }
         }
 
@@ -108,6 +112,10 @@ namespace AmazeMec.Server.Controllers
 
             int costoReal = recompensa.Costo;
 
+            await using var transaccion = _context.Database.IsRelational()
+                ? await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable)
+                : null;
+
             var puntosUsuario = await _context.Puntos
                 .Include(p => p.Compra)
                 .Where(p => p.Compra != null && p.Compra.UsuarioId == usuarioId.Value)
@@ -121,7 +129,7 @@ namespace AmazeMec.Server.Controllers
 
             var compraCanje = new Compra
             {
-                FechaCompra = DateTime.Now,
+                FechaCompra = DateTime.UtcNow,
                 Monto = 0,
                 Cantidad = 1,
                 UsuarioId = usuarioId.Value
@@ -137,6 +145,11 @@ namespace AmazeMec.Server.Controllers
             };
             _context.Puntos.Add(gastoPuntos);
             await _context.SaveChangesAsync();
+
+            if (transaccion != null)
+            {
+                await transaccion.CommitAsync();
+            }
 
             return Ok(new
             {
@@ -162,7 +175,7 @@ namespace AmazeMec.Server.Controllers
 
             var compra = new Compra
             {
-                FechaCompra = DateTime.Now,
+                FechaCompra = DateTime.UtcNow,
                 Monto = request.Monto,
                 Cantidad = request.Cantidad,
                 UsuarioId = usuarioId.Value

@@ -13,11 +13,13 @@ namespace AmazeMec.Server.Controllers
     public class CuestionarioController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<CuestionarioController>? _logger;
         private const int MaxBonoEncuesta = 1;
 
-        public CuestionarioController(AppDbContext context)
+        public CuestionarioController(AppDbContext context, ILogger<CuestionarioController>? logger = null)
         {
             _context = context;
+            _logger = logger;
         }
 
         private int? ObtenerUsuarioId()
@@ -52,7 +54,7 @@ namespace AmazeMec.Server.Controllers
                 objetoNoquerido = request.ObjetoNoquerido?.Trim() ?? "",
                 presupuesto = request.Presupuesto,
                 dias = request.Dias,
-                FechaRespuesta = DateTime.Now,
+                FechaRespuesta = DateTime.UtcNow,
                 UsuarioId = usuarioId
             };
 
@@ -63,7 +65,8 @@ namespace AmazeMec.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Error al guardar el cuestionario.", detalle = ex.Message });
+                _logger?.LogError(ex, "Error al guardar el cuestionario para el usuario {UsuarioId}", usuarioId);
+                return StatusCode(500, new { error = "Error al guardar el cuestionario." });
             }
 
             // Si es usuario anónimo
@@ -95,13 +98,13 @@ namespace AmazeMec.Server.Controllers
                         && p.Compra.UsuarioId == usuarioId.Value
                         && p.Compra.Monto == 0
                         && p.PuntosObtenidos > 0
-                        && p.Compra.FechaCompra >= DateTime.Today);
+                        && p.Compra.FechaCompra >= DateTime.UtcNow.Date);
 
                 if (!yaRecompensadoHoy)
                 {
                     var compraRecompensa = new Compra
                     {
-                        FechaCompra = DateTime.Now,
+                        FechaCompra = DateTime.UtcNow,
                         Monto = 0,
                         Cantidad = 1,
                         UsuarioId = usuarioId.Value
@@ -121,9 +124,10 @@ namespace AmazeMec.Server.Controllers
                     puntosAcreditados = MaxBonoEncuesta;
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // El cuestionario ya se guardó; la recompensa no debe interrumpir la respuesta
+                _logger?.LogWarning(ex, "No se pudo acreditar el bono diario para el usuario {UsuarioId}", usuarioId.Value);
             }
 
             return Ok(new CuestionarioResponse

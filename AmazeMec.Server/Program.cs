@@ -17,9 +17,15 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // 2. Base de Datos (Entity Framework Core)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    connectionString = builder.Configuration["DefaultConnection"];
+}
+
 builder.Services.AddDbContext<AppDbContext>(opciones =>
     opciones.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         opcionesSql => opcionesSql.EnableRetryOnFailure()));
 
 // 3. Caché y Sesión para estado anónimo temporal (Amazings pendientes)
@@ -122,6 +128,13 @@ else
     {
         errorApp.Run(async contexto =>
         {
+            var feature = contexto.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            if (feature?.Error != null)
+            {
+                var logger = contexto.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(feature.Error, "Excepción no controlada en {Path}", contexto.Request.Path);
+            }
+
             contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
             if (contexto.Request.Path.StartsWithSegments("/api"))
             {
@@ -149,6 +162,9 @@ app.Use(async (contexto, siguiente) =>
     contexto.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     contexto.Response.Headers.Append("X-XSS-Protection", "0");
     contexto.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    contexto.Response.Headers.Append(
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https://m.media-amazon.com; frame-src https://www.youtube-nocookie.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
     await siguiente();
 });
 

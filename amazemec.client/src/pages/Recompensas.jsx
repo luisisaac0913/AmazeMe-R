@@ -2,20 +2,36 @@ import { useState, useEffect } from 'react';
 
 export default function Recompensas() {
   const [balanceData, setBalanceData] = useState(null);
+  const [catalogo, setCatalogo] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionMsg, setActionMsg] = useState(null);
+  const [canjeandoId, setCanjeandoId] = useState(null);
+  const [confirmCanje, setConfirmCanje] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     let active = true;
 
-    async function loadBalance() {
+    async function loadData() {
       try {
-        const resBalance = await fetch('/api/recompensas/balance', { credentials: 'include' });
-        if (resBalance.ok && active) {
-          const dataB = await resBalance.json();
+        const [resBalance, resCatalogo] = await Promise.all([
+          fetch('/api/recompensas/balance', { credentials: 'include' }),
+          fetch('/api/recompensas/catalogo', { credentials: 'include' })
+        ]);
+
+        const dataB = await resBalance.json().catch(() => null);
+        if (!resBalance.ok) {
+          if (active) setError(dataB?.error || 'No se pudo cargar la información de recompensas.');
+          return;
+        }
+
+        const dataC = resCatalogo.ok ? await resCatalogo.json().catch(() => []) : [];
+        if (active) {
           setBalanceData(dataB);
+          if (Array.isArray(dataC)) {
+            setCatalogo(dataC);
+          }
         }
       } catch {
         if (active) setError('Error al cargar la información de recompensas.');
@@ -24,7 +40,7 @@ export default function Recompensas() {
       }
     }
 
-    loadBalance();
+    loadData();
 
     return () => {
       active = false;
@@ -32,11 +48,16 @@ export default function Recompensas() {
   }, [refreshTrigger]);
 
   const handleCanjear = async (recompensaId, costoPuntos, titulo) => {
+    if (canjeandoId !== null) return;
     if (!balanceData || balanceData.balanceDisponible < costoPuntos) {
       setError(`No cuentas con suficientes Amazings para canjear ${titulo}.`);
       return;
     }
 
+    setCanjeandoId(recompensaId);
+    setConfirmCanje(null);
+    setError(null);
+    setActionMsg(null);
     try {
       const res = await fetch('/api/recompensas/canjear', {
         method: 'POST',
@@ -54,6 +75,8 @@ export default function Recompensas() {
       setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setCanjeandoId(null);
     }
   };
 
@@ -109,114 +132,110 @@ export default function Recompensas() {
 
       {/* Rewards Catalog */}
       <div className="row g-4 mb-5">
-        {/* Tier 1 */}
-        <div className="col-md-6 col-lg-4">
-          <div className="card h-100 border rounded-4 overflow-hidden bg-white d-flex flex-column justify-content-between">
-            <div>
-              <div className="p-4 bg-light text-center border-bottom">
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '100px' }}>
-                  <span className="material-symbols-outlined text-success" style={{ fontSize: '64px' }}>
-                    card_giftcard
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="badge bg-success-subtle text-success">200 Amazings</span>
-                  <small className="text-muted">Bono Nivel 1</small>
-                </div>
-                <h3 className="fw-bold text-dark mb-2">$100 USD</h3>
-                <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
-                  Recibe un total de $100.00 dólares por cada 200 Amazings acumulados en tu cuenta.
-                </p>
-              </div>
-            </div>
-            <div className="p-4 pt-0">
-              <button
-                className="btn btn-outline-success rounded-pill w-100 py-2 fw-medium d-inline-flex align-items-center justify-content-center gap-1"
-                type="button"
-                onClick={() => handleCanjear(1, 200, 'Bono Nivel 1 ($100 USD)')}
-                disabled={balance < 200}
-              >
-                <span className="material-symbols-outlined fs-6">redeem</span>
-                <span>{balance >= 200 ? 'Canjear Bono' : 'Puntos Insuficientes'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        {catalogo.map((item) => {
+          const esPopular = item.id === 2;
+          const iconName = item.id === 1 ? 'card_giftcard' : item.id === 2 ? 'stars' : 'workspace_premium';
+          const partesTitulo = item.titulo.split(' - ');
+          const subtitulo = partesTitulo[0] || item.categoria;
+          const valorPremio = partesTitulo[1] || item.titulo;
 
-        {/* Tier 2 */}
-        <div className="col-md-6 col-lg-4">
-          <div className="card h-100 border border-success border-2 rounded-4 overflow-hidden bg-white d-flex flex-column justify-content-between position-relative shadow-sm">
-            <div>
-              <div className="p-4 bg-light text-center border-bottom position-relative">
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '100px' }}>
-                  <span className="material-symbols-outlined text-success" style={{ fontSize: '64px' }}>
-                    stars
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="badge bg-success text-white">500 Amazings &bull; Popular</span>
-                  <small className="text-muted">Bono Nivel 2</small>
-                </div>
-                <h3 className="fw-bold text-dark mb-2">$250 USD</h3>
-                <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
-                  Recibe un total de $250.00 dólares por cada 500 Amazings acumulados en tu cuenta.
-                </p>
-              </div>
-            </div>
-            <div className="p-4 pt-0">
-              <button
-                className="btn btn-success rounded-pill w-100 py-2 fw-medium text-white shadow-sm d-inline-flex align-items-center justify-content-center gap-1"
-                type="button"
-                onClick={() => handleCanjear(2, 500, 'Bono Nivel 2 ($250 USD)')}
-                disabled={balance < 500}
+          return (
+            <div key={item.id} className="col-md-6 col-lg-4">
+              <div
+                className={`card h-100 rounded-4 overflow-hidden bg-white d-flex flex-column justify-content-between ${
+                  esPopular ? 'border border-success border-2 position-relative shadow-sm' : 'border'
+                }`}
               >
-                <span className="material-symbols-outlined fs-6">redeem</span>
-                <span>{balance >= 500 ? 'Canjear Bono' : 'Puntos Insuficientes'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tier 3 */}
-        <div className="col-md-6 col-lg-4">
-          <div className="card h-100 border rounded-4 overflow-hidden bg-white d-flex flex-column justify-content-between">
-            <div>
-              <div className="p-4 bg-light text-center border-bottom">
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '100px' }}>
-                  <span className="material-symbols-outlined text-success" style={{ fontSize: '64px' }}>
-                    workspace_premium
-                  </span>
+                <div>
+                  <div className="p-4 bg-light text-center border-bottom">
+                    <div className="d-flex justify-content-center align-items-center" style={{ height: '100px' }}>
+                      <span className="material-symbols-outlined text-success" style={{ fontSize: '64px' }}>
+                        {iconName}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className={`badge ${esPopular ? 'bg-success text-white' : 'bg-success-subtle text-success'}`}>
+                        {item.costo} Amazings{esPopular ? ' • Popular' : ''}
+                      </span>
+                      <small className="text-muted">{subtitulo}</small>
+                    </div>
+                    <h3 className="fw-bold text-dark mb-2">{valorPremio}</h3>
+                    <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
+                      {item.descripcion}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 pt-0">
+                  <button
+                    className={`btn rounded-pill w-100 py-2 fw-medium d-inline-flex align-items-center justify-content-center gap-1 ${
+                      esPopular ? 'btn-success text-white shadow-sm' : 'btn-outline-success'
+                    }`}
+                    type="button"
+                    onClick={() => setConfirmCanje(item)}
+                    disabled={balance < item.costo || canjeandoId !== null}
+                  >
+                    <span className="material-symbols-outlined fs-6">redeem</span>
+                    <span>
+                      {canjeandoId === item.id
+                        ? 'Canjeando...'
+                        : balance >= item.costo
+                          ? 'Canjear Bono'
+                          : 'Puntos Insuficientes'}
+                    </span>
+                  </button>
                 </div>
               </div>
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="badge bg-success-subtle text-success">1000 Amazings</span>
-                  <small className="text-muted">Bono Elite</small>
-                </div>
-                <h3 className="fw-bold text-dark mb-2">$500 USD</h3>
-                <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
-                  Recibe un total de $500.00 dólares por cada 1000 Amazings acumulados en tu cuenta.
-                </p>
-              </div>
             </div>
-            <div className="p-4 pt-0">
-              <button
-                className="btn btn-outline-success rounded-pill w-100 py-2 fw-medium d-inline-flex align-items-center justify-content-center gap-1"
-                type="button"
-                onClick={() => handleCanjear(3, 1000, 'Bono Elite ($500 USD)')}
-                disabled={balance < 1000}
-              >
-                <span className="material-symbols-outlined fs-6">redeem</span>
-                <span>{balance >= 1000 ? 'Canjear Bono' : 'Puntos Insuficientes'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmCanje && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: 'rgba(32, 33, 36, 0.65)' }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border rounded-4 p-4 bg-white shadow-lg">
+              <div className="modal-header border-0 pb-0">
+                <h5 className="modal-title fw-bold text-dark">Confirmar canje</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Cerrar"
+                  onClick={() => setConfirmCanje(null)}
+                ></button>
+              </div>
+              <div className="modal-body py-3">
+                <p className="text-muted mb-0" style={{ lineHeight: 1.6 }}>
+                  ¿Deseas canjear <strong>{confirmCanje.titulo}</strong> por{' '}
+                  <strong className="text-success">{confirmCanje.costo} Amazings</strong>? Esta operación descontará los puntos de tu balance inmediatamente.
+                </p>
+              </div>
+              <div className="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-4"
+                  onClick={() => setConfirmCanje(null)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success rounded-pill px-4 text-white"
+                  onClick={() => handleCanjear(confirmCanje.id, confirmCanje.costo, confirmCanje.titulo)}
+                >
+                  Confirmar canje
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Transaction History */}
       {balanceData?.historial && balanceData.historial.length > 0 && (

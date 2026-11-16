@@ -36,7 +36,7 @@ namespace AmazeMec.Server.Models
 
         public int dias { get; set; }
 
-        public DateTime FechaRespuesta { get; set; } = DateTime.Now;
+        public DateTime FechaRespuesta { get; set; } = DateTime.UtcNow;
 
         public int? UsuarioId { get; set; }
 

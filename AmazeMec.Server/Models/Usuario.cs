@@ -20,7 +20,7 @@ namespace AmazeMec.Server.Models
         [MaxLength(255)]
         public string Contraseña { get; set; } = string.Empty;
 
-        public DateTime Fecharegistro { get; set; } = DateTime.Now;
+        public DateTime Fecharegistro { get; set; } = DateTime.UtcNow;
 
         [NotMapped]
         public string ConfirmarContraseña { get; set; } = string.Empty;
