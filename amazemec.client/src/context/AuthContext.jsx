@@ -129,8 +129,18 @@ export function AuthProvider({ children }) {
     return await parseAuthResponse(response, 'Error al cambiar contraseña.');
   };
 
+  const deleteAccount = async () => {
+    const response = await fetch('/api/auth/cuenta', {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    const data = await parseAuthResponse(response, 'Error al eliminar la cuenta.');
+    setUser(null);
+    return data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

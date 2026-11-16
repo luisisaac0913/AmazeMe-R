@@ -7,13 +7,15 @@ export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const returnUrl = searchParams.get('returnUrl') || '/';
+  const rawReturnUrl = searchParams.get('returnUrl') || '/';
+  const returnUrl = rawReturnUrl.startsWith('/') && !rawReturnUrl.startsWith('//') ? rawReturnUrl : '/';
   const ultimaRespuestaId = searchParams.get('ultimaRespuestaId') || null;
 
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [contraseña, setContraseña] = useState('');
   const [confirmarContraseña, setConfirmarContraseña] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -72,7 +74,7 @@ export default function Register() {
         <div className="col-12 col-sm-10 col-md-8 col-lg-5">
           <div className="card google-auth-card p-4 p-md-5 bg-white">
             <div className="text-center mb-4">
-              <Link to="/entrar" className="text-decoration-none d-inline-flex align-items-center gap-2 mb-2">
+              <Link to="/" className="text-decoration-none d-inline-flex align-items-center gap-2 mb-2">
                 <img
                   src="/Images/Iconos/Amazeme_logo.png"
                   alt="AmazeMe"
@@ -98,8 +100,9 @@ export default function Register() {
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
-                <label className="form-label small fw-semibold text-secondary">Correo electrónico</label>
+                <label htmlFor="registerEmail" className="form-label small fw-semibold text-secondary">Correo electrónico</label>
                 <input
+                  id="registerEmail"
                   type="email"
                   className="form-control"
                   placeholder="ejemplo@correo.com"
@@ -111,8 +114,9 @@ export default function Register() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-semibold text-secondary">Nombre de usuario</label>
+                <label htmlFor="registerNombre" className="form-label small fw-semibold text-secondary">Nombre de usuario</label>
                 <input
+                  id="registerNombre"
                   type="text"
                   className="form-control"
                   placeholder="Elige un nombre de usuario"
@@ -124,24 +128,39 @@ export default function Register() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-semibold text-secondary">Contraseña</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="Crea una contraseña segura"
-                  value={contraseña}
-                  onChange={(e) => setContraseña(e.target.value)}
-                  required
-                />
+                <label htmlFor="registerPassword" className="form-label small fw-semibold text-secondary">Contraseña</label>
+                <div className="input-group">
+                  <input
+                    id="registerPassword"
+                    type={mostrarPassword ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="Crea una contraseña segura"
+                    value={contraseña}
+                    onChange={(e) => setContraseña(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary d-inline-flex align-items-center px-3"
+                    style={{ borderRadius: '0 8px 8px 0' }}
+                    onClick={() => setMostrarPassword((prev) => !prev)}
+                    aria-label={mostrarPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
+                  >
+                    <span className="material-symbols-outlined fs-5">
+                      {mostrarPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
                 <div className="form-text small text-muted">
                   Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo especial.
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="form-label small fw-semibold text-secondary">Confirmar contraseña</label>
+                <label htmlFor="registerConfirmPassword" className="form-label small fw-semibold text-secondary">Confirmar contraseña</label>
                 <input
-                  type="password"
+                  id="registerConfirmPassword"
+                  type={mostrarPassword ? 'text' : 'password'}
                   className="form-control"
                   placeholder="Repite tu contraseña"
                   value={confirmarContraseña}

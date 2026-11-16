@@ -34,14 +34,24 @@ export default function Cuestionario() {
         setFormData((prev) => ({ ...prev, relacion: valor }));
     };
 
+    const getTodayLocalISO = () => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
     const handleFechaChange = (e) => {
         const val = e.target.value;
         let diasCalculados = 7;
         if (val) {
-            const targetDate = new Date(val);
-            const today = new Date();
+            const [y, m, d] = val.split('-').map(Number);
+            const targetDate = new Date(y, m - 1, d);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const diffTime = targetDate - today;
-            diasCalculados = Math.max(1, Math.min(31, Math.ceil(diffTime / (1000 * 60 * 60 * 24))));
+            diasCalculados = Math.max(1, Math.min(31, Math.round(diffTime / (1000 * 60 * 60 * 24))));
         }
         setFormData((prev) => ({
             ...prev,
@@ -75,9 +85,22 @@ export default function Cuestionario() {
                 })
             });
 
-            const data = await response.json();
+            const rawText = await response.text();
+            let data = null;
+            if (rawText) {
+                try {
+                    data = JSON.parse(rawText);
+                } catch {
+                    data = null;
+                }
+            }
+
             if (!response.ok) {
-                throw new Error(data.error || 'Error al guardar el cuestionario.');
+                const validationError =
+                    data?.errors && typeof data.errors === 'object'
+                        ? Object.values(data.errors).flat().find(Boolean)
+                        : null;
+                throw new Error(data?.error || validationError || 'Error al guardar el cuestionario.');
             }
 
             setResultado(data);
@@ -471,7 +494,7 @@ export default function Cuestionario() {
                         <input
                             type="date"
                             name="fechaLimite"
-                            min={new Date().toISOString().split('T')[0]}
+                            min={getTodayLocalISO()}
                             value={formData.fechaLimite}
                             onChange={handleFechaChange}
                             className="form-control"
@@ -613,6 +636,33 @@ export default function Cuestionario() {
                                 Estamos calculando y cruzando los criterios de personalidad, ocasión y presupuesto para generar tus recomendaciones ideales.
                             </p>
                         </div>
+                    ) : error ? (
+                        <div className="py-3">
+                            <span className="material-symbols-outlined text-danger" style={{ fontSize: '64px' }}>
+                                error
+                            </span>
+                            <h4 className="fw-bold mb-2 text-dark">No se pudo guardar el cuestionario</h4>
+                            <p className="text-muted mb-4">{error}</p>
+                            <div className="d-flex justify-content-center gap-3 flex-wrap">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary rounded-pill px-4"
+                                    onClick={() => {
+                                        setError(null);
+                                        setStep('Rmn');
+                                    }}
+                                >
+                                    Volver al Resumen
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-success rounded-pill px-4 text-white"
+                                    onClick={() => handleSubmit()}
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        </div>
                     ) : (
                         <div className="py-3">
                             <span className="material-symbols-outlined text-success" style={{ fontSize: '64px' }}>
@@ -667,10 +717,8 @@ export default function Cuestionario() {
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() => {
-                                        setMostrarModal(false);
-                                        navigate('/');
-                                    }}
+                                    aria-label="Cerrar"
+                                    onClick={() => setMostrarModal(false)}
                                 ></button>
                             </div>
                             <div className="modal-body text-center py-4">
@@ -689,10 +737,7 @@ export default function Cuestionario() {
                                 <button
                                     type="button"
                                     className="btn btn-outline-secondary rounded-pill px-4"
-                                    onClick={() => {
-                                        setMostrarModal(false);
-                                        navigate('/');
-                                    }}
+                                    onClick={() => setMostrarModal(false)}
                                 >
                                     Más tarde
                                 </button>

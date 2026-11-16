@@ -11,7 +11,7 @@ export default function Privacidad() {
         </div>
         <h1 className="display-6 fw-bold text-dark mb-2">Política de Privacidad</h1>
         <p className="text-muted">
-          Última actualización: Abril 2026 • Transparencia total sobre cómo recopilamos, usamos y protegemos tu información.
+          Última actualización: Noviembre 2026 • Transparencia total sobre cómo recopilamos, usamos y protegemos tu información.
         </p>
       </div>
 
@@ -49,7 +49,9 @@ export default function Privacidad() {
                 <h2 className="h5 fw-bold text-dark mb-0">1. Responsable del Tratamiento y Datos Recopilados</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
-                En <strong>AmazeMe</strong> valoramos profundamente tu confianza y nos comprometemos a proteger tus datos personales. Al utilizar nuestra plataforma, únicamente recopilamos la información estrictamente necesaria para brindarte una experiencia personalizada y segura:
+                El responsable del tratamiento de tus datos personales en <strong>AmazeMe</strong> es{' '}
+                <strong>Luis Issac Olvera Morán</strong>, con domicilio en{' '}
+                <strong>Gómez Palacio, Durango, México</strong>. Al utilizar nuestra plataforma, únicamente recopilamos la información estrictamente necesaria para brindarte una experiencia personalizada y segura:
               </p>
               <ul className="text-muted small ps-3 mb-0" style={{ lineHeight: 1.8 }}>
                 <li>
@@ -105,9 +107,9 @@ export default function Privacidad() {
                 </div>
                 <div className="col-md-6">
                   <div className="p-3 bg-light rounded-3 h-100">
-                    <h6 className="fw-bold text-dark small mb-1">Cero Venta a Terceros</h6>
+                    <h6 className="fw-bold text-dark small mb-1">Cero Venta a Terceros e Infraestructura</h6>
                     <p className="text-muted mb-0" style={{ fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      Nunca vendemos, alquilamos ni comercializamos tu correo electrónico o perfil con anunciantes externos.
+                      Nunca vendemos ni comercializamos tus datos. La plataforma opera alojada en infraestructura en la nube de Microsoft Azure bajo medidas de seguridad técnicas y administrativas.
                     </p>
                   </div>
                 </div>
@@ -143,7 +145,7 @@ export default function Privacidad() {
                       </td>
                       <td>Cookie Esencial (HttpOnly)</td>
                       <td>Autenticación de usuario, seguridad de sesión y acceso al panel de recompensas.</td>
-                      <td>Sesión / 7 días</td>
+                      <td>Sesión / 14 días</td>
                     </tr>
                     <tr>
                       <td>
@@ -151,7 +153,7 @@ export default function Privacidad() {
                       </td>
                       <td>Cookie Esencial (HttpOnly)</td>
                       <td>Resguarda temporalmente el bono pendiente de encuesta antes de iniciar sesión o registrarte.</td>
-                      <td>30 minutos</td>
+                      <td>24 horas</td>
                     </tr>
                     <tr>
                       <td>
@@ -200,20 +202,36 @@ export default function Privacidad() {
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
                 Como usuario titular de tus datos, tienes pleno derecho en cualquier momento a:
               </p>
-              <ul className="text-muted small ps-3 mb-4" style={{ lineHeight: 1.8 }}>
+              <ul className="text-muted small ps-3 mb-3" style={{ lineHeight: 1.8 }}>
                 <li>
                   <strong>Acceder</strong> a los datos personales que tenemos asociados a tu cuenta.
                 </li>
                 <li>
-                  <strong>Rectificar</strong> o actualizar tu nombre de usuario o dirección de correo electrónico.
+                  <strong>Rectificar</strong> o actualizar tu nombre de usuario o dirección de correo electrónico desde{' '}
+                  <Link to="/perfil" className="text-success fw-medium text-decoration-none">
+                    tu perfil
+                  </Link>
+                  .
                 </li>
                 <li>
-                  <strong>Cancelar o Eliminar</strong> permanentemente tu cuenta junto con tu historial de puntos y respuestas.
+                  <strong>Cancelar o Eliminar</strong> permanentemente tu cuenta junto con tu historial de puntos y respuestas directamente desde{' '}
+                  <Link to="/perfil" className="text-success fw-medium text-decoration-none">
+                    Mi Perfil
+                  </Link>{' '}
+                  o mediante solicitud por correo.
                 </li>
                 <li>
                   <strong>Oponerte</strong> al uso de almacenamiento local borrando las cookies desde la configuración de tu navegador.
                 </li>
               </ul>
+
+              <p className="text-muted small mb-4" style={{ lineHeight: 1.7 }}>
+                <strong>Procedimiento y plazos de respuesta:</strong> Para ejercer cualquiera de tus derechos ARCO por correo electrónico, envía tu solicitud a{' '}
+                <a href="mailto:amazeme@gmail.com" className="text-success fw-medium text-decoration-none">
+                  amazeme@gmail.com
+                </a>{' '}
+                indicando tu nombre completo, el correo registrado en la plataforma y una descripción clara del derecho que deseas ejercer. Atenderemos tu solicitud en un plazo máximo de <strong>20 días hábiles</strong> conforme a la LFPDPPP (o <strong>1 mes</strong> cuando resulte aplicable el RGPD).
+              </p>
 
               <div className="p-3 bg-success-subtle bg-opacity-25 border border-success-subtle rounded-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                 <div>
