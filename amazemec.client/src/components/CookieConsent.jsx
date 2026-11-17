@@ -31,14 +31,14 @@ export default function CookieConsent() {
           <div className="row align-items-center gy-3">
             <div className="col-12 col-md-8 text-start">
               <div className="d-flex align-items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-success fs-5">cookie</span>
+                <span className="material-symbols-outlined text-secondary fs-5">cookie</span>
                 <h6 className="fw-bold text-dark mb-0">
-                  Privacidad y Cookies en Amaze<span className="brand-accent">Me</span>
+                  Privacidad y Cookies en AmazeMe
                 </h6>
               </div>
               <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
                 Usamos cookies esenciales para mantener tu sesión, proteger tu cuenta y recordar tus respuestas de la encuesta. Consulta nuestra{' '}
-                <Link to="/privacidad" className="text-success fw-medium text-decoration-none">
+                <Link to="/privacidad" className="text-dark fw-medium text-decoration-underline">
                   política de privacidad
                 </Link>
                 .

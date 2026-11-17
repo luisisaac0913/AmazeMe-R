@@ -74,9 +74,9 @@ namespace AmazeMec.Server.Controllers
 
         private static readonly Dictionary<int, (string Titulo, int Costo, string Descripcion, string Categoria)> CatalogoOficial = new()
         {
-            { 1, ("Bono Nivel 1 - $100 USD", 200, "Recibe un total de $100.00 dólares por cada 200 Amazings acumulados en tu cuenta.", "Bono") },
-            { 2, ("Bono Nivel 2 - $250 USD", 500, "Recibe un total de $250.00 dólares por cada 500 Amazings acumulados en tu cuenta.", "Bono") },
-            { 3, ("Bono Elite - $500 USD", 1000, "Recibe un total de $500.00 dólares por cada 1000 Amazings acumulados en tu cuenta.", "Bono") }
+            { 1, ("Bono Nivel 1 - $5 USD", 200, "Recibe un bono o tarjeta de regalo de $5.00 USD por cada 200 Amazings acumulados en tu cuenta.", "Bono") },
+            { 2, ("Bono Nivel 2 - $15 USD", 500, "Recibe un bono o tarjeta de regalo de $15.00 USD por cada 500 Amazings acumulados en tu cuenta.", "Bono") },
+            { 3, ("Bono Elite - $35 USD", 1000, "Recibe un bono o tarjeta de regalo de $35.00 USD por cada 1000 Amazings acumulados en tu cuenta.", "Bono") }
         };
 
         [HttpGet("catalogo")]

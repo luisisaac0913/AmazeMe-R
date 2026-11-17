@@ -32,6 +32,10 @@ export default function Footer() {
                 Términos
               </Link>
               <span className="text-muted">&bull;</span>
+              <Link to="/quejas" className="text-secondary text-decoration-none hover-link">
+                Quejas
+              </Link>
+              <span className="text-muted">&bull;</span>
               <span className="text-muted">&copy; {new Date().getFullYear()} AmazeMe</span>
             </div>
           </div>

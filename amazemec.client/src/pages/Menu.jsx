@@ -94,9 +94,6 @@ export default function Menu() {
         <div className="row g-4">
           <div className="col-md-4 movimiento_Seleccionado">
             <div className="card h-100 border rounded-4 text-center p-4 bg-white">
-              <div className="d-flex justify-content-center mb-3">
-                <span className="badge bg-success-subtle text-success rounded-circle p-2 fs-5">1</span>
-              </div>
               <div className="mb-3">
                 <img
                   src="/Images/Iconos/EncuestaImagen.png"
@@ -115,9 +112,6 @@ export default function Menu() {
           </div>
           <div className="col-md-4 movimiento_Seleccionado">
             <div className="card h-100 border rounded-4 text-center p-4 bg-white">
-              <div className="d-flex justify-content-center mb-3">
-                <span className="badge bg-success-subtle text-success rounded-circle p-2 fs-5">2</span>
-              </div>
               <div className="mb-3">
                 <img
                   src="/Images/Iconos/ProcesandoEncuestaImagen.png"
@@ -136,9 +130,6 @@ export default function Menu() {
           </div>
           <div className="col-md-4 movimiento_Seleccionado">
             <div className="card h-100 border rounded-4 text-center p-4 bg-white">
-              <div className="d-flex justify-content-center mb-3">
-                <span className="badge bg-success-subtle text-success rounded-circle p-2 fs-5">3</span>
-              </div>
               <div className="mb-3">
                 <img
                   src="/Images/Iconos/RecompensaEncuestaImagen.png"
@@ -162,10 +153,6 @@ export default function Menu() {
       <div className="mb-5">
         <div className="card border rounded-4 p-4 p-lg-5 bg-white">
           <div className="text-center mb-4">
-            <div className="d-inline-flex align-items-center gap-1 text-success small fw-medium mb-1">
-              <span className="material-symbols-outlined fs-5">storefront</span>
-              <span>Recomendaciones destacadas</span>
-            </div>
             <h2 className="h3 fw-bold text-dark">Productos más recomendados</h2>
             <p className="text-muted small mb-0">Ideas comprobadas por usuarios satisfechos</p>
           </div>
@@ -298,10 +285,6 @@ export default function Menu() {
       <section className="mb-4">
         <div className="card border rounded-4 p-4 p-lg-5 bg-white">
           <div className="text-center mb-4">
-            <div className="d-inline-flex align-items-center gap-1 text-success small fw-medium mb-1">
-              <span className="material-symbols-outlined fs-5">help</span>
-              <span>Centro de Ayuda</span>
-            </div>
             <h2 className="h3 fw-bold text-dark">Preguntas frecuentes</h2>
             <p className="text-muted small mb-0">Respuestas rápidas a las dudas más comunes</p>
           </div>

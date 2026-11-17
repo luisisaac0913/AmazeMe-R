@@ -46,7 +46,7 @@ export default function Navbar() {
           </button>
 
           <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`} id="navMenuAmaze">
-            <ul className="navbar-nav ms-auto align-items-center gap-1 my-2 my-md-0">
+            <ul className="navbar-nav ms-auto align-items-center gap-2 my-2 my-md-0">
               <li className="nav-item">
                 <NavLink
                   to="/"
@@ -91,10 +91,10 @@ export default function Navbar() {
                     <NavLink
                       to="/perfil"
                       onClick={closeMenu}
-                      className="nav-link nav-link-custom d-flex align-items-center gap-2"
+                      className={({ isActive }) => `nav-link nav-link-custom nav-profile-pill d-flex align-items-center gap-2 ${isActive ? 'active' : ''}`}
                       title="Mi Perfil"
                     >
-                      <div className="user-avatar-circle">
+                      <div className="user-avatar-circle nav-avatar-sm">
                         <span className="material-symbols-outlined fs-6">person</span>
                       </div>
                       <span className="fw-medium">{user.nombre}</span>

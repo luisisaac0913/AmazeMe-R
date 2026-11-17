@@ -11,6 +11,7 @@ import Perfil from './pages/Perfil';
 import Recompensas from './pages/Recompensas';
 import Terminos from './pages/Terminos';
 import Privacidad from './pages/Privacidad';
+import Quejas from './pages/Quejas';
 
 export default function App() {
   const location = useLocation();
@@ -44,6 +45,7 @@ export default function App() {
           />
           <Route path="/terminos" element={<Terminos />} />
           <Route path="/privacidad" element={<Privacidad />} />
+          <Route path="/quejas" element={<Quejas />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

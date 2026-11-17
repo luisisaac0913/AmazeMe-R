@@ -5,7 +5,7 @@ export default function Privacidad() {
     <div className="container py-4 py-md-5" style={{ maxWidth: '1000px' }}>
       {/* HEADER */}
       <div className="mb-5">
-        <div className="d-inline-flex align-items-center gap-2 text-success small fw-medium mb-2 bg-success-subtle px-3 py-1 rounded-pill">
+        <div className="d-inline-flex align-items-center gap-2 text-secondary small fw-medium mb-2 bg-light border px-3 py-1 rounded-pill">
           <span className="material-symbols-outlined fs-6">verified_user</span>
           <span>Centro de Privacidad y Protección de Datos</span>
         </div>
@@ -45,7 +45,7 @@ export default function Privacidad() {
             {/* 1 */}
             <section id="responsable" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-success fs-4">person_pin</span>
+                <span className="material-symbols-outlined text-secondary fs-4">person_pin</span>
                 <h2 className="h5 fw-bold text-dark mb-0">1. Responsable del Tratamiento y Datos Recopilados</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
@@ -72,7 +72,7 @@ export default function Privacidad() {
             {/* 2 */}
             <section id="finalidad" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-success fs-4">query_stats</span>
+                <span className="material-symbols-outlined text-secondary fs-4">query_stats</span>
                 <h2 className="h5 fw-bold text-dark mb-0">2. Finalidad del Tratamiento de Datos</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
@@ -119,7 +119,7 @@ export default function Privacidad() {
             {/* 3 */}
             <section id="cookies" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-success fs-4">cookie</span>
+                <span className="material-symbols-outlined text-secondary fs-4">cookie</span>
                 <h2 className="h5 fw-bold text-dark mb-0">3. Uso de Cookies y Almacenamiento Local</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
@@ -166,7 +166,7 @@ export default function Privacidad() {
               </div>
 
               <div className="alert alert-light border d-flex align-items-start gap-2 mt-3 mb-0" style={{ fontSize: '0.85rem' }}>
-                <span className="material-symbols-outlined text-success fs-5 mt-1">info</span>
+                <span className="material-symbols-outlined text-secondary fs-5 mt-1">info</span>
                 <div>
                   <strong>Almacenamiento para invitados:</strong> Si completas un cuestionario sin iniciar sesión, guardamos temporalmente tu bono pendiente (1 Amazing diario) en la sesión del servidor para que puedas acreditarlo si decides crear tu cuenta o iniciar sesión en ese momento.
                 </div>
@@ -178,7 +178,7 @@ export default function Privacidad() {
             {/* 4 */}
             <section id="seguridad" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-success fs-4">shield_lock</span>
+                <span className="material-symbols-outlined text-secondary fs-4">shield_lock</span>
                 <h2 className="h5 fw-bold text-dark mb-0">4. Seguridad de la Información y Encriptación</h2>
               </div>
               <p className="text-muted small mb-0" style={{ lineHeight: 1.7 }}>
@@ -194,7 +194,7 @@ export default function Privacidad() {
             {/* 5 */}
             <section id="derechos">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-success fs-4">gavel</span>
+                <span className="material-symbols-outlined text-secondary fs-4">gavel</span>
                 <h2 className="h5 fw-bold text-dark mb-0">5. Tus Derechos (Acceso, Rectificación, Cancelación y Oposición)</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
@@ -205,27 +205,40 @@ export default function Privacidad() {
                   <strong>Acceder</strong> a los datos personales que tenemos asociados a tu cuenta.
                 </li>
                 <li>
-                  <strong>Rectificar</strong> o actualizar tu nombre de usuario o dirección de correo electrónico.
+                  <strong>Rectificar</strong> o actualizar tu nombre de usuario o dirección de correo electrónico desde{' '}
+                  <Link to="/perfil" className="text-dark fw-medium text-decoration-underline">
+                    tu perfil
+                  </Link>
+                  .
                 </li>
                 <li>
-                  <strong>Cancelar o Eliminar</strong> permanentemente tu cuenta junto con tu historial de puntos y respuestas.
+                  <strong>Cancelar o Eliminar</strong> permanentemente tu cuenta junto con tu historial de puntos y respuestas directamente desde{' '}
+                  <Link to="/perfil" className="text-dark fw-medium text-decoration-underline">
+                    Mi Perfil
+                  </Link>{' '}
+                  o mediante solicitud por correo.
                 </li>
                 <li>
                   <strong>Oponerte</strong> al uso de almacenamiento local borrando las cookies desde la configuración de tu navegador.
                 </li>
               </ul>
 
-              <div className="p-3 bg-success-subtle bg-opacity-25 border border-success-subtle rounded-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+              <div className="p-3 bg-light border rounded-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                 <div>
                   <h6 className="fw-bold text-dark mb-1">¿Tienes dudas sobre tu privacidad?</h6>
                   <p className="text-muted small mb-0">
                     Contáctanos directamente enviando un correo a{' '}
-                    <a href="mailto:amazeme@gmail.com" className="fw-bold text-success text-decoration-none">
+                    <a href="mailto:amazeme@gmail.com" className="fw-bold text-dark text-decoration-underline">
                       amazeme@gmail.com
-                    </a>
+                    </a>{' '}
+                    o a través de nuestro{' '}
+                    <Link to="/quejas" className="fw-bold text-dark text-decoration-underline">
+                      buzón de quejas
+                    </Link>
+                    .
                   </p>
                 </div>
-                <Link to="/" className="btn btn-success rounded-pill px-4 text-white text-nowrap">
+                <Link to="/" className="btn btn-outline-secondary rounded-pill px-4 text-nowrap">
                   Volver al Inicio
                 </Link>
               </div>
