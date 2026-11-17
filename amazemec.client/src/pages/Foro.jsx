@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const CATEGORIAS_FORO = ['Todas', 'Regalo recibido', 'Recomendación', 'Experiencia', 'Duda'];
@@ -7,6 +7,8 @@ const CATEGORIAS_FORO = ['Todas', 'Regalo recibido', 'Recomendación', 'Experien
 export default function Foro() {
   const { user: usuario } = useAuth();
   const navegar = useNavigate();
+  const ubicacion = useLocation();
+  const borradorInicial = ubicacion.state?.borradorForo || null;
 
   const [publicaciones, establecerPublicaciones] = useState([]);
   const [cargando, establecerCargando] = useState(true);
@@ -14,12 +16,12 @@ export default function Foro() {
   const [categoriaActiva, establecerCategoriaActiva] = useState('Todas');
   const [orden, establecerOrden] = useState('recientes');
   const [busqueda, establecerBusqueda] = useState('');
-  const [mostrarFormulario, establecerMostrarFormulario] = useState(false);
+  const [mostrarFormulario, establecerMostrarFormulario] = useState(Boolean(borradorInicial));
 
-  const [titulo, establecerTitulo] = useState('');
-  const [contenido, establecerContenido] = useState('');
-  const [regaloMencionado, establecerRegaloMencionado] = useState('');
-  const [categoriaNueva, establecerCategoriaNueva] = useState('Regalo recibido');
+  const [titulo, establecerTitulo] = useState(borradorInicial?.titulo || '');
+  const [contenido, establecerContenido] = useState(borradorInicial?.contenido || '');
+  const [regaloMencionado, establecerRegaloMencionado] = useState(borradorInicial?.regaloMencionado || '');
+  const [categoriaNueva, establecerCategoriaNueva] = useState(borradorInicial?.categoria || 'Regalo recibido');
   const [calificacion, establecerCalificacion] = useState(5);
   const [imagenArchivo, establecerImagenArchivo] = useState(null);
   const [vistaPreviaImagen, establecerVistaPreviaImagen] = useState(null);
@@ -28,6 +30,7 @@ export default function Foro() {
   const [comentariosAbiertos, establecerComentariosAbiertos] = useState({});
   const [textoComentarios, establecerTextoComentarios] = useState({});
   const [enviandoComentarioId, establecerEnviandoComentarioId] = useState(null);
+  const [eliminandoComentarioId, establecerEliminandoComentarioId] = useState(null);
   const [likeEnProcesoId, establecerLikeEnProcesoId] = useState(null);
   const [eliminandoId, establecerEliminandoId] = useState(null);
 
@@ -123,6 +126,10 @@ export default function Foro() {
         body: formulario
       });
 
+      if (respuesta.status === 429) {
+        throw new Error('Has publicado muy rápido. Espera un momento antes de intentarlo de nuevo.');
+      }
+
       const datos = await respuesta.json().catch(() => null);
       if (!respuesta.ok) {
         throw new Error(datos?.error || 'No se pudo crear la publicación.');
@@ -200,6 +207,9 @@ export default function Foro() {
         credentials: 'include',
         body: JSON.stringify({ contenido: texto })
       });
+      if (respuesta.status === 429) {
+        throw new Error('Has comentado muy rápido. Espera un momento antes de enviar otro comentario.');
+      }
       const datos = await respuesta.json().catch(() => null);
       if (!respuesta.ok) {
         throw new Error(datos?.error || 'No se pudo enviar el comentario.');
@@ -242,6 +252,37 @@ export default function Foro() {
       establecerError(err.message);
     } finally {
       establecerEliminandoId(null);
+    }
+  };
+
+  const manejarEliminarComentario = async (idPublicacion, idComentario) => {
+    if (eliminandoComentarioId === idComentario) return;
+
+    establecerEliminandoComentarioId(idComentario);
+    try {
+      const respuesta = await fetch(`/api/foro/comentarios/${idComentario}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const datos = await respuesta.json().catch(() => null);
+      if (!respuesta.ok) {
+        throw new Error(datos?.error || 'No se pudo eliminar el comentario.');
+      }
+      establecerPublicaciones((previas) =>
+        previas.map((pub) =>
+          pub.id === idPublicacion
+            ? {
+                ...pub,
+                totalComentarios: Math.max(0, pub.totalComentarios - 1),
+                comentarios: pub.comentarios.filter((c) => c.id !== idComentario)
+              }
+            : pub
+        )
+      );
+    } catch (err) {
+      establecerError(err.message);
+    } finally {
+      establecerEliminandoComentarioId(null);
     }
   };
 
@@ -462,8 +503,7 @@ export default function Foro() {
               </form>
               <select
                 aria-label="Ordenar publicaciones"
-                className="form-select form-select-sm"
-                style={{ maxWidth: '170px' }}
+                className="form-select form-select-sm flex-sm-grow-0"
                 value={orden}
                 onChange={(evento) => establecerOrden(evento.target.value)}
               >
@@ -494,28 +534,42 @@ export default function Foro() {
           {publicaciones.map((pub) => {
             const comentariosVisibles = Boolean(comentariosAbiertos[pub.id]);
             return (
-              <article key={pub.id} className="card border rounded-4 p-4 bg-white shadow-sm">
-                <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="user-avatar-circle flex-shrink-0" style={{ width: '42px', height: '42px' }}>
-                      {pub.autorFoto ? (
-                        <img
-                          src={pub.autorFoto}
-                          alt={pub.autorNombre}
-                          className="w-100 h-100 object-fit-cover rounded-circle"
-                        />
-                      ) : (
-                        <span className="material-symbols-outlined fs-5">person</span>
-                      )}
+              <article key={pub.id} className="card border rounded-4 p-3 p-md-4 bg-white shadow-sm">
+                <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-start gap-2 mb-3">
+                  <div className="d-flex align-items-center justify-content-between gap-2">
+                    <div className="d-flex align-items-center gap-2 gap-sm-3 min-w-0">
+                      <div className="user-avatar-circle flex-shrink-0" style={{ width: '42px', height: '42px' }}>
+                        {pub.autorFoto ? (
+                          <img
+                            src={pub.autorFoto}
+                            alt={pub.autorNombre}
+                            className="w-100 h-100 object-fit-cover rounded-circle"
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined fs-5">person</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="fw-bold text-dark text-truncate">{pub.autorNombre}</div>
+                        <small className="text-muted">
+                          {new Date(pub.fechaCreacion).toLocaleDateString()}
+                        </small>
+                      </div>
                     </div>
-                    <div>
-                      <div className="fw-bold text-dark">{pub.autorNombre}</div>
-                      <small className="text-muted">
-                        {new Date(pub.fechaCreacion).toLocaleDateString()}
-                      </small>
-                    </div>
+                    {pub.esPropia && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 d-inline-flex align-items-center d-sm-none flex-shrink-0"
+                        disabled={eliminandoId === pub.id}
+                        onClick={() => manejarEliminarPublicacion(pub.id)}
+                        aria-label="Eliminar publicación"
+                      >
+                        <span className="material-symbols-outlined fs-6">delete</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+
+                  <div className="d-flex align-items-center gap-2 flex-wrap justify-content-start justify-content-sm-end">
                     <span className="badge bg-light border text-secondary">{pub.categoria}</span>
                     <span className="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1">
                       <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>star</span>
@@ -524,7 +578,7 @@ export default function Foro() {
                     {pub.esPropia && (
                       <button
                         type="button"
-                        className="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 d-inline-flex align-items-center"
+                        className="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 d-none d-sm-inline-flex align-items-center"
                         disabled={eliminandoId === pub.id}
                         onClick={() => manejarEliminarPublicacion(pub.id)}
                         aria-label="Eliminar publicación"
@@ -551,11 +605,11 @@ export default function Foro() {
                 </p>
 
                 {pub.imagenUrl && (
-                  <div className="mb-3">
+                  <div className="mb-3 bg-light rounded-3 border text-center overflow-hidden p-2">
                     <img
                       src={pub.imagenUrl}
                       alt={pub.titulo}
-                      className="img-fluid rounded-3 border"
+                      className="img-fluid rounded-2"
                       style={{ maxHeight: '360px', objectFit: 'contain' }}
                     />
                   </div>
@@ -605,9 +659,22 @@ export default function Foro() {
                                 </div>
                                 <strong className="small text-dark">{comentario.autorNombre}</strong>
                               </div>
-                              <small className="text-muted">
-                                {new Date(comentario.fechaCreacion).toLocaleDateString()}
-                              </small>
+                              <div className="d-flex align-items-center gap-2">
+                                <small className="text-muted">
+                                  {new Date(comentario.fechaCreacion).toLocaleDateString()}
+                                </small>
+                                {comentario.esPropio && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-danger btn-sm rounded-pill px-2 py-0 d-inline-flex align-items-center"
+                                    disabled={eliminandoComentarioId === comentario.id}
+                                    onClick={() => manejarEliminarComentario(pub.id, comentario.id)}
+                                    aria-label="Eliminar comentario"
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                             <p className="small text-muted mb-0">{comentario.contenido}</p>
                           </div>
@@ -616,7 +683,7 @@ export default function Foro() {
                     )}
 
                     {usuario ? (
-                      <form className="d-flex gap-2" onSubmit={(evento) => manejarEnviarComentario(evento, pub.id)}>
+                      <form className="d-flex flex-column flex-sm-row gap-2" onSubmit={(evento) => manejarEnviarComentario(evento, pub.id)}>
                         <input
                           type="text"
                           className="form-control form-control-sm"
@@ -634,7 +701,7 @@ export default function Foro() {
                         <button
                           type="submit"
                           disabled={enviandoComentarioId === pub.id}
-                          className="btn btn-success btn-sm rounded-pill px-3 text-white text-nowrap"
+                          className="btn btn-success btn-sm rounded-pill px-3 text-white text-nowrap align-self-end align-self-sm-auto"
                         >
                           {enviandoComentarioId === pub.id ? 'Enviando...' : 'Comentar'}
                         </button>

@@ -3,6 +3,7 @@ using AmazeMec.Server.DTOs;
 using AmazeMec.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -118,7 +119,53 @@ namespace AmazeMec.Server.Controllers
         }
 
         [Authorize]
+        [HttpGet("mias")]
+        public async Task<IActionResult> ObtenerMisPublicaciones()
+        {
+            int? usuarioId = ObtenerUsuarioId();
+            if (usuarioId == null) return Unauthorized();
+
+            try
+            {
+                var lista = await _context.PublicacionesForo
+                    .Include(p => p.Usuario)
+                    .Include(p => p.Likes)
+                    .Include(p => p.Comentarios)
+                    .Where(p => p.UsuarioId == usuarioId.Value)
+                    .OrderByDescending(p => p.FechaCreacion)
+                    .ToListAsync();
+
+                var resultado = lista.Select(p => new PublicacionForoResponse
+                {
+                    Id = p.Id,
+                    Titulo = p.Titulo,
+                    Contenido = p.Contenido,
+                    RegaloMencionado = p.RegaloMencionado,
+                    ImagenUrl = p.ImagenUrl,
+                    Categoria = p.Categoria,
+                    Calificacion = p.Calificacion,
+                    FechaCreacion = p.FechaCreacion,
+                    AutorNombre = p.Usuario?.Nombre ?? "Usuario",
+                    AutorFoto = p.Usuario?.FotoPerfil,
+                    EsPropia = true,
+                    TotalLikes = p.Likes.Count,
+                    DioLike = p.Likes.Any(l => l.UsuarioId == usuarioId.Value),
+                    TotalComentarios = p.Comentarios.Count,
+                    Comentarios = new List<ComentarioForoResponse>()
+                }).ToList();
+
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error al consultar mis publicaciones del foro para usuario {UsuarioId}", usuarioId.Value);
+                return StatusCode(500, new { error = "No se pudieron cargar tus opiniones." });
+            }
+        }
+
+        [Authorize]
         [HttpPost]
+        [EnableRateLimiting("limiteForo")]
         public async Task<IActionResult> CrearPublicacion([FromForm] CrearPublicacionForoRequest request)
         {
             if (!ModelState.IsValid)
@@ -251,6 +298,7 @@ namespace AmazeMec.Server.Controllers
 
         [Authorize]
         [HttpPost("{id:int}/comentarios")]
+        [EnableRateLimiting("limiteForo")]
         public async Task<IActionResult> AgregarComentario(int id, [FromBody] CrearComentarioForoRequest request)
         {
             if (!ModelState.IsValid)
@@ -325,6 +373,30 @@ namespace AmazeMec.Server.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Publicación eliminada." });
+        }
+
+        [Authorize]
+        [HttpDelete("comentarios/{comentarioId:int}")]
+        public async Task<IActionResult> EliminarComentario(int comentarioId)
+        {
+            int? usuarioId = ObtenerUsuarioId();
+            if (usuarioId == null) return Unauthorized();
+
+            var comentario = await _context.ComentariosForo.FindAsync(comentarioId);
+            if (comentario == null)
+            {
+                return NotFound(new { error = "El comentario no existe." });
+            }
+
+            if (comentario.UsuarioId != usuarioId.Value)
+            {
+                return Forbid();
+            }
+
+            _context.ComentariosForo.Remove(comentario);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Comentario eliminado." });
         }
 
         private static bool EsImagenValida(byte[] bytes)

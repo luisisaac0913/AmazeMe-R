@@ -84,6 +84,16 @@ builder.Services.AddRateLimiter(opciones =>
                 PermitLimit = 10,
                 Window = TimeSpan.FromMinutes(5)
             }));
+
+    opciones.AddPolicy("limiteForo", contextoHttp =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: contextoHttp.Connection.RemoteIpAddress?.ToString() ?? "global",
+            factory: particion => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 15,
+                Window = TimeSpan.FromMinutes(5)
+            }));
 });
 
 // 6. Política de Cookies

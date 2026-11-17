@@ -60,6 +60,41 @@ export default function Cuestionario() {
         }));
     };
 
+    const compartirEnForo = () => {
+        const ocasionTexto = formData.ocasion?.trim() || 'Ocasión especial';
+        const lineasResultados = [
+            '¡Hola comunidad! Acabo de completar el cuestionario de AmazeMe con estos resultados y me gustaría conocer sus opiniones o ideas:',
+            '',
+            `• Relación: ${formData.relacion}`,
+            `• Edad aproximada: ${formData.edad} años`,
+            `• Ocasión: ${ocasionTexto}`,
+            `• Pasatiempos: ${formData.pasatiempos?.trim() || 'No especificado'}`,
+            `• Personalidad: ${formData.personalidad?.trim() || 'No especificado'}`,
+            `• Presupuesto estimado: $${formData.presupuesto}`,
+            `• Días disponibles: ${formData.dias} días`
+        ];
+
+        if (formData.objetoQuerido?.trim()) {
+            lineasResultados.push(`• Le gustaría: ${formData.objetoQuerido.trim()}`);
+        }
+        if (formData.objetoNoquerido?.trim()) {
+            lineasResultados.push(`• Evitar: ${formData.objetoNoquerido.trim()}`);
+        }
+
+        lineasResultados.push('', '¿Qué regalo me recomendarían con este perfil?');
+
+        navigate('/foro', {
+            state: {
+                borradorForo: {
+                    titulo: `Ideas de regalo para ${formData.relacion} (${ocasionTexto})`,
+                    categoria: 'Recomendación',
+                    regaloMencionado: formData.objetoQuerido?.trim() || '',
+                    contenido: lineasResultados.join('\n')
+                }
+            }
+        });
+    };
+
     const progressPercent = typeof step === 'number' ? Math.round((step / 9) * 100) : 100;
 
     const handleSubmit = async (e) => {
@@ -678,10 +713,18 @@ export default function Cuestionario() {
                                 </div>
                             )}
 
-                            <div className="d-flex justify-content-center gap-3">
+                            <div className="d-flex justify-content-center gap-3 flex-wrap">
                                 <Link to="/" className="btn btn-outline-secondary rounded-pill px-4">
                                     Ir al Inicio
                                 </Link>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-success rounded-pill px-4 d-inline-flex align-items-center gap-2"
+                                    onClick={compartirEnForo}
+                                >
+                                    <span className="material-symbols-outlined fs-6">share</span>
+                                    <span>Compartir en el Foro</span>
+                                </button>
                                 {user ? (
                                     <Link to="/recompensas" className="btn btn-success rounded-pill px-4 text-white">
                                         Ver mis Recompensas
