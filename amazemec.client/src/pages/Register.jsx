@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, subirFotoPerfil } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -16,8 +16,40 @@ export default function Register() {
   const [contraseña, setContraseña] = useState('');
   const [confirmarContraseña, setConfirmarContraseña] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [fotoArchivo, establecerFotoArchivo] = useState(null);
+  const [vistaPreviaFoto, establecerVistaPreviaFoto] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const manejarSeleccionFoto = (evento) => {
+    setError(null);
+    const archivo = evento.target.files?.[0];
+    if (!archivo) {
+      establecerFotoArchivo(null);
+      establecerVistaPreviaFoto(null);
+      return;
+    }
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!tiposPermitidos.includes(archivo.type)) {
+      setError('Formato de foto no admitido. Usa JPG, PNG o WEBP.');
+      establecerFotoArchivo(null);
+      establecerVistaPreviaFoto(null);
+      return;
+    }
+
+    if (archivo.size > 2 * 1024 * 1024) {
+      setError('La foto de perfil no debe superar los 2 MB.');
+      establecerFotoArchivo(null);
+      establecerVistaPreviaFoto(null);
+      return;
+    }
+
+    establecerFotoArchivo(archivo);
+    const lector = new FileReader();
+    lector.onload = () => establecerVistaPreviaFoto(lector.result);
+    lector.readAsDataURL(archivo);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,6 +92,9 @@ export default function Register() {
         confirmarContraseña,
         ultimaRespuestaId ? parseInt(ultimaRespuestaId) : null
       );
+      if (fotoArchivo) {
+        await subirFotoPerfil(fotoArchivo);
+      }
       navigate(returnUrl);
     } catch (err) {
       setError(err.message);
@@ -167,6 +202,49 @@ export default function Register() {
                   onChange={(e) => setConfirmarContraseña(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="mb-4">
+                <span className="form-label small fw-semibold text-secondary d-block mb-2">
+                  Foto de perfil (opcional)
+                </span>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="user-avatar-circle flex-shrink-0" style={{ width: '56px', height: '56px' }}>
+                    {vistaPreviaFoto ? (
+                      <img src={vistaPreviaFoto} alt="Vista previa" className="w-100 h-100 object-fit-cover rounded-circle" />
+                    ) : (
+                      <span className="material-symbols-outlined fs-4">person</span>
+                    )}
+                  </div>
+                  <div className="d-flex flex-wrap gap-2">
+                    <label
+                      htmlFor="registerFotoInput"
+                      className="btn btn-outline-success btn-sm rounded-pill px-3 mb-0 d-inline-flex align-items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined fs-6">add_a_photo</span>
+                      <span>{fotoArchivo ? 'Cambiar foto' : 'Añadir foto de perfil'}</span>
+                    </label>
+                    <input
+                      id="registerFotoInput"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="d-none"
+                      onChange={manejarSeleccionFoto}
+                    />
+                    {fotoArchivo && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                        onClick={() => {
+                          establecerFotoArchivo(null);
+                          establecerVistaPreviaFoto(null);
+                        }}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="d-flex justify-content-between align-items-center mb-3">
