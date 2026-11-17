@@ -139,8 +139,32 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const subirFotoPerfil = async (archivo) => {
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+
+    const response = await fetch('/api/auth/foto-perfil', {
+      method: 'POST',
+      credentials: 'include',
+      body: formulario
+    });
+    const data = await parseAuthResponse(response, 'Error al subir la foto de perfil.');
+    setUser(data);
+    return data;
+  };
+
+  const eliminarFotoPerfil = async () => {
+    const response = await fetch('/api/auth/foto-perfil', {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    const data = await parseAuthResponse(response, 'Error al eliminar la foto de perfil.');
+    setUser(data);
+    return data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, deleteAccount, subirFotoPerfil, eliminarFotoPerfil }}>
       {children}
     </AuthContext.Provider>
   );

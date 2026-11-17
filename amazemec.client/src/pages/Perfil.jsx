@@ -305,8 +305,159 @@ function EliminarCuentaCard({ onDelete }) {
   );
 }
 
+function FotoPerfilCard({ usuario, alSubirFoto, alEliminarFoto }) {
+  const [archivoSeleccionado, establecerArchivoSeleccionado] = useState(null);
+  const [vistaPrevia, establecerVistaPrevia] = useState(null);
+  const [exito, establecerExito] = useState(null);
+  const [error, establecerError] = useState(null);
+  const [cargando, establecerCargando] = useState(false);
+
+  const manejarCambioArchivo = (evento) => {
+    establecerError(null);
+    establecerExito(null);
+    const archivo = evento.target.files?.[0];
+    if (!archivo) {
+      establecerArchivoSeleccionado(null);
+      establecerVistaPrevia(null);
+      return;
+    }
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!tiposPermitidos.includes(archivo.type)) {
+      establecerError('Formato no admitido. Selecciona una imagen JPG, PNG o WEBP.');
+      establecerArchivoSeleccionado(null);
+      establecerVistaPrevia(null);
+      return;
+    }
+
+    if (archivo.size > 2 * 1024 * 1024) {
+      establecerError('La imagen no debe superar los 2 MB.');
+      establecerArchivoSeleccionado(null);
+      establecerVistaPrevia(null);
+      return;
+    }
+
+    establecerArchivoSeleccionado(archivo);
+    const lector = new FileReader();
+    lector.onload = () => establecerVistaPrevia(lector.result);
+    lector.readAsDataURL(archivo);
+  };
+
+  const manejarSubida = async (evento) => {
+    evento.preventDefault();
+    if (!archivoSeleccionado) {
+      establecerError('Selecciona una imagen antes de guardar.');
+      return;
+    }
+
+    establecerCargando(true);
+    establecerError(null);
+    establecerExito(null);
+    try {
+      await alSubirFoto(archivoSeleccionado);
+      establecerExito('Foto de perfil actualizada con éxito.');
+      establecerArchivoSeleccionado(null);
+      establecerVistaPrevia(null);
+    } catch (err) {
+      establecerError(err.message);
+    } finally {
+      establecerCargando(false);
+    }
+  };
+
+  const manejarEliminacion = async () => {
+    establecerCargando(true);
+    establecerError(null);
+    establecerExito(null);
+    try {
+      await alEliminarFoto();
+      establecerExito('Foto de perfil eliminada.');
+      establecerArchivoSeleccionado(null);
+      establecerVistaPrevia(null);
+    } catch (err) {
+      establecerError(err.message);
+    } finally {
+      establecerCargando(false);
+    }
+  };
+
+  const imagenActual = vistaPrevia || usuario?.fotoPerfil;
+
+  return (
+    <div className="card border rounded-4 p-4 p-md-5 mb-4 bg-white shadow-sm">
+      <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+        <span className="material-symbols-outlined text-success">account_circle</span>
+        <span>Foto de Perfil</span>
+      </h5>
+
+      {exito && (
+        <div className="alert alert-success alert-dismissible fade show mb-3 d-flex align-items-center gap-2">
+          <span className="material-symbols-outlined fs-5">check_circle</span>
+          <div>{exito}</div>
+          <button type="button" className="btn-close" onClick={() => establecerExito(null)}></button>
+        </div>
+      )}
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show mb-3 d-flex align-items-center gap-2">
+          <span className="material-symbols-outlined fs-5">error</span>
+          <div>{error}</div>
+          <button type="button" className="btn-close" onClick={() => establecerError(null)}></button>
+        </div>
+      )}
+
+      <form onSubmit={manejarSubida}>
+        <div className="d-flex flex-column flex-sm-row align-items-center gap-4 mb-3">
+          <div className="user-avatar-circle flex-shrink-0" style={{ width: '80px', height: '80px' }}>
+            {imagenActual ? (
+              <img src={imagenActual} alt={usuario?.nombre || 'Perfil'} className="w-100 h-100 object-fit-cover rounded-circle" />
+            ) : (
+              <span className="material-symbols-outlined" style={{ fontSize: '40px' }}>person</span>
+            )}
+          </div>
+          <div className="w-100">
+            <label htmlFor="perfilFotoInput" className="form-label small fw-semibold text-secondary">
+              Seleccionar imagen (JPG, PNG o WEBP, máximo 2 MB)
+            </label>
+            <input
+              id="perfilFotoInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="form-control"
+              onChange={manejarCambioArchivo}
+            />
+          </div>
+        </div>
+
+        <div className="d-flex justify-content-end gap-2 flex-wrap">
+          {usuario?.fotoPerfil && (
+            <button
+              type="button"
+              disabled={cargando}
+              className="btn btn-outline-danger rounded-pill px-4"
+              onClick={manejarEliminacion}
+            >
+              Quitar foto
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={cargando || !archivoSeleccionado}
+            className="btn btn-success rounded-pill px-4 text-white shadow-sm d-inline-flex align-items-center gap-2"
+          >
+            {cargando ? (
+              <div className="spinner-border spinner-border-sm text-light" role="status"></div>
+            ) : (
+              <span>Guardar Foto</span>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function Perfil() {
-  const { user, updateProfile, changePassword, deleteAccount } = useAuth();
+  const { user, updateProfile, changePassword, deleteAccount, subirFotoPerfil, eliminarFotoPerfil } = useAuth();
 
   return (
     <div className="container my-5">
@@ -314,7 +465,11 @@ export default function Perfil() {
         <div className="col-12 col-lg-8">
           <div className="d-flex align-items-center gap-3 mb-4">
             <div className="user-avatar-circle" style={{ width: '48px', height: '48px', fontSize: '1.5rem' }}>
-              <span className="material-symbols-outlined fs-3">person</span>
+              {user?.fotoPerfil ? (
+                <img src={user.fotoPerfil} alt={user.nombre} className="w-100 h-100 object-fit-cover rounded-circle" />
+              ) : (
+                <span className="material-symbols-outlined fs-3">person</span>
+              )}
             </div>
             <div>
               <h1 className="h3 fw-bold text-dark mb-0">Cuenta de AmazeMe</h1>
@@ -322,6 +477,7 @@ export default function Perfil() {
             </div>
           </div>
 
+          <FotoPerfilCard usuario={user} alSubirFoto={subirFotoPerfil} alEliminarFoto={eliminarFotoPerfil} />
           <PerfilDatosForm key={user?.id || 'guest'} user={user} onUpdate={updateProfile} />
           <PasswordForm onChangePassword={changePassword} />
           <EliminarCuentaCard onDelete={deleteAccount} />

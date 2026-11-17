@@ -290,7 +290,7 @@ export default function Menu() {
           </div>
           <div className="col-lg-5 text-center">
             <img
-              src="/Images/Iconos/Amazings.png"
+              src="/Images/Iconos/Amazings_Nuevo.png"
               className="img-fluid rounded-4"
               style={{ maxHeight: '220px', objectFit: 'contain' }}
               alt="Amazings"

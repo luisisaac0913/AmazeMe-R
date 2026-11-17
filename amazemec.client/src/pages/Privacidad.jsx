@@ -1,55 +1,88 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+const secciones = [
+  { id: 'responsable', titulo: '1. Responsable y Datos' },
+  { id: 'finalidad', titulo: '2. Uso de Información' },
+  { id: 'cookies', titulo: '3. Cookies y Almacenamiento' },
+  { id: 'seguridad', titulo: '4. Seguridad y Encriptación' },
+  { id: 'derechos', titulo: '5. Tus Derechos ARCO' }
+];
+
 export default function Privacidad() {
+  const [seccionActiva, establecerSeccionActiva] = useState('responsable');
+
+  useEffect(() => {
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        const visible = entradas.find((entrada) => entrada.isIntersecting);
+        if (visible) {
+          establecerSeccionActiva(visible.target.id);
+        }
+      },
+      { rootMargin: '-120px 0px -60% 0px', threshold: 0.1 }
+    );
+
+    secciones.forEach((seccion) => {
+      const elemento = document.getElementById(seccion.id);
+      if (elemento) {
+        observador.observe(elemento);
+      }
+    });
+
+    return () => observador.disconnect();
+  }, []);
+
+  const manejarClicSeccion = (evento, idSeccion) => {
+    evento.preventDefault();
+    establecerSeccionActiva(idSeccion);
+    const elemento = document.getElementById(idSeccion);
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="container py-4 py-md-5" style={{ maxWidth: '1000px' }}>
-      {/* HEADER */}
       <div className="mb-5">
-        <div className="d-inline-flex align-items-center gap-2 text-secondary small fw-medium mb-2 bg-light border px-3 py-1 rounded-pill">
-          <span className="material-symbols-outlined fs-6">verified_user</span>
-          <span>Centro de Privacidad y Protección de Datos</span>
-        </div>
         <h1 className="display-6 fw-bold text-dark mb-2">Política de Privacidad</h1>
         <p className="text-muted">
-          Última actualización: Abril 2026 • Transparencia total sobre cómo recopilamos, usamos y protegemos tu información.
+          Última actualización: Noviembre 2026 • Transparencia total sobre cómo recopilamos, usamos y protegemos tu información.
         </p>
       </div>
 
       <div className="row g-4">
-        {/* SIDEBAR NAVIGATION */}
         <div className="col-lg-3 d-none d-lg-block">
           <div className="sticky-top" style={{ top: '90px' }}>
             <div className="nav flex-column nav-pills gap-1 small">
-              <a className="nav-link text-dark fw-medium rounded-pill px-3 py-2 nav-legal-link" href="#responsable">
-                1. Responsable y Datos
-              </a>
-              <a className="nav-link text-dark fw-medium rounded-pill px-3 py-2 nav-legal-link" href="#finalidad">
-                2. Uso de Información
-              </a>
-              <a className="nav-link text-dark fw-medium rounded-pill px-3 py-2 nav-legal-link" href="#cookies">
-                3. Cookies y Almacenamiento
-              </a>
-              <a className="nav-link text-dark fw-medium rounded-pill px-3 py-2 nav-legal-link" href="#seguridad">
-                4. Seguridad y Encriptación
-              </a>
-              <a className="nav-link text-dark fw-medium rounded-pill px-3 py-2 nav-legal-link" href="#derechos">
-                5. Tus Derechos ARCO
-              </a>
+              {secciones.map((seccion) => {
+                const estaActiva = seccionActiva === seccion.id;
+                return (
+                  <a
+                    key={seccion.id}
+                    className={`nav-link text-dark fw-medium px-3 py-2 nav-legal-link ${estaActiva ? 'active border border-secondary-subtle' : ''}`}
+                    href={`#${seccion.id}`}
+                    onClick={(evento) => manejarClicSeccion(evento, seccion.id)}
+                  >
+                    {seccion.titulo}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* CONTENT */}
         <div className="col-lg-9">
           <div className="card border rounded-4 p-4 p-md-5 bg-white shadow-sm">
-            {/* 1 */}
             <section id="responsable" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-secondary fs-4">person_pin</span>
                 <h2 className="h5 fw-bold text-dark mb-0">1. Responsable del Tratamiento y Datos Recopilados</h2>
               </div>
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
-                En <strong>AmazeMe</strong> valoramos profundamente tu confianza y nos comprometemos a proteger tus datos personales. Al utilizar nuestra plataforma, únicamente recopilamos la información estrictamente necesaria para brindarte una experiencia personalizada y segura:
+                El responsable del tratamiento de tus datos personales en <strong>AmazeMe</strong> es{' '}
+                <strong>Luis Issac Olvera Morán</strong>, con domicilio en{' '}
+                <strong>Gómez Palacio, Durango, México</strong>. Al utilizar nuestra plataforma, únicamente recopilamos la información estrictamente necesaria para brindarte una experiencia personalizada y segura:
               </p>
               <ul className="text-muted small ps-3 mb-0" style={{ lineHeight: 1.8 }}>
                 <li>
@@ -69,7 +102,6 @@ export default function Privacidad() {
 
             <hr className="border-light-subtle my-4" />
 
-            {/* 2 */}
             <section id="finalidad" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-secondary fs-4">query_stats</span>
@@ -105,9 +137,9 @@ export default function Privacidad() {
                 </div>
                 <div className="col-md-6">
                   <div className="p-3 bg-light rounded-3 h-100">
-                    <h6 className="fw-bold text-dark small mb-1">Cero Venta a Terceros</h6>
+                    <h6 className="fw-bold text-dark small mb-1">Cero Venta a Terceros e Infraestructura</h6>
                     <p className="text-muted mb-0" style={{ fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      Nunca vendemos, alquilamos ni comercializamos tu correo electrónico o perfil con anunciantes externos.
+                      Nunca vendemos ni comercializamos tus datos. La plataforma opera alojada en infraestructura en la nube de Microsoft Azure bajo medidas de seguridad técnicas y administrativas.
                     </p>
                   </div>
                 </div>
@@ -116,7 +148,6 @@ export default function Privacidad() {
 
             <hr className="border-light-subtle my-4" />
 
-            {/* 3 */}
             <section id="cookies" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-secondary fs-4">cookie</span>
@@ -143,7 +174,7 @@ export default function Privacidad() {
                       </td>
                       <td>Cookie Esencial (HttpOnly)</td>
                       <td>Autenticación de usuario, seguridad de sesión y acceso al panel de recompensas.</td>
-                      <td>Sesión / 7 días</td>
+                      <td>Sesión / 14 días</td>
                     </tr>
                     <tr>
                       <td>
@@ -151,7 +182,7 @@ export default function Privacidad() {
                       </td>
                       <td>Cookie Esencial (HttpOnly)</td>
                       <td>Resguarda temporalmente el bono pendiente de encuesta antes de iniciar sesión o registrarte.</td>
-                      <td>30 minutos</td>
+                      <td>24 horas</td>
                     </tr>
                     <tr>
                       <td>
@@ -175,7 +206,6 @@ export default function Privacidad() {
 
             <hr className="border-light-subtle my-4" />
 
-            {/* 4 */}
             <section id="seguridad" className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-secondary fs-4">shield_lock</span>
@@ -191,7 +221,6 @@ export default function Privacidad() {
 
             <hr className="border-light-subtle my-4" />
 
-            {/* 5 */}
             <section id="derechos">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-secondary fs-4">gavel</span>
@@ -200,7 +229,7 @@ export default function Privacidad() {
               <p className="text-muted small mb-3" style={{ lineHeight: 1.7 }}>
                 Como usuario titular de tus datos, tienes pleno derecho en cualquier momento a:
               </p>
-              <ul className="text-muted small ps-3 mb-4" style={{ lineHeight: 1.8 }}>
+              <ul className="text-muted small ps-3 mb-3" style={{ lineHeight: 1.8 }}>
                 <li>
                   <strong>Acceder</strong> a los datos personales que tenemos asociados a tu cuenta.
                 </li>
@@ -222,6 +251,14 @@ export default function Privacidad() {
                   <strong>Oponerte</strong> al uso de almacenamiento local borrando las cookies desde la configuración de tu navegador.
                 </li>
               </ul>
+
+              <p className="text-muted small mb-4" style={{ lineHeight: 1.7 }}>
+                <strong>Procedimiento y plazos de respuesta:</strong> Para ejercer cualquiera de tus derechos ARCO por correo electrónico, envía tu solicitud a{' '}
+                <a href="mailto:amazeme@gmail.com" className="text-dark fw-medium text-decoration-underline">
+                  amazeme@gmail.com
+                </a>{' '}
+                indicando tu nombre completo, el correo registrado en la plataforma y una descripción clara del derecho que deseas ejercer. Atenderemos tu solicitud en un plazo máximo de <strong>20 días hábiles</strong> conforme a la LFPDPPP (o <strong>1 mes</strong> cuando resulte aplicable el RGPD).
+              </p>
 
               <div className="p-3 bg-light border rounded-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                 <div>

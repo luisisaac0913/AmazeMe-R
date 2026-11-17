@@ -72,7 +72,7 @@ namespace AmazeMec.Tests.Controllers
 
             var compra = new Compra { UsuarioId = user.Id, FechaCompra = DateTime.Now, Monto = 0, Cantidad = 1, Usuario = user };
             context.Compras.Add(compra);
-            context.Puntos.Add(new Puntos { PuntosObtenidos = 500, PuntosGastados = 0, Compra = compra });
+            context.Puntos.Add(new Puntos { PuntosObtenidos = 1500, PuntosGastados = 0, Compra = compra });
             await context.SaveChangesAsync();
 
             var controller = new RecompensasController(context)
@@ -83,7 +83,7 @@ namespace AmazeMec.Tests.Controllers
             var request = new CanjeRecompensaRequest
             {
                 RecompensaId = 1,
-                CostoPuntos = 200 // Bono de 200 Amazings
+                CostoPuntos = 1000
             };
 
             // Act
@@ -94,7 +94,7 @@ namespace AmazeMec.Tests.Controllers
             Assert.NotNull(okResult.Value);
 
             // Verifica que se agregó el registro de gasto
-            var gasto = await context.Puntos.FirstOrDefaultAsync(p => p.PuntosGastados == 200);
+            var gasto = await context.Puntos.FirstOrDefaultAsync(p => p.PuntosGastados == 1000);
             Assert.NotNull(gasto);
         }
 
@@ -139,7 +139,7 @@ namespace AmazeMec.Tests.Controllers
 
             var compra = new Compra { UsuarioId = user.Id, FechaCompra = DateTime.Now, Monto = 0, Cantidad = 1, Usuario = user };
             context.Compras.Add(compra);
-            context.Puntos.Add(new Puntos { PuntosObtenidos = 500, PuntosGastados = 0, Compra = compra });
+            context.Puntos.Add(new Puntos { PuntosObtenidos = 1500, PuntosGastados = 0, Compra = compra });
             await context.SaveChangesAsync();
 
             var controller = new RecompensasController(context)
@@ -149,8 +149,8 @@ namespace AmazeMec.Tests.Controllers
 
             var request = new CanjeRecompensaRequest
             {
-                RecompensaId = 1, // Bono Nivel 1 cuesta 200 oficialmente
-                CostoPuntos = 1   // Intento de manipulación
+                RecompensaId = 1,
+                CostoPuntos = 1
             };
 
             // Act
@@ -158,7 +158,7 @@ namespace AmazeMec.Tests.Controllers
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            var gasto = await context.Puntos.FirstOrDefaultAsync(p => p.PuntosGastados == 200);
+            var gasto = await context.Puntos.FirstOrDefaultAsync(p => p.PuntosGastados == 1000);
             Assert.NotNull(gasto);
         }
 

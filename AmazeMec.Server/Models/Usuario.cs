@@ -22,6 +22,8 @@ namespace AmazeMec.Server.Models
 
         public DateTime Fecharegistro { get; set; } = DateTime.UtcNow;
 
+        public string? FotoPerfil { get; set; }
+
         [NotMapped]
         public string ConfirmarContraseña { get; set; } = string.Empty;
     }

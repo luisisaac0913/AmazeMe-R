@@ -1,4 +1,5 @@
-﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+﻿import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CookieConsent from './components/CookieConsent';
@@ -14,13 +15,17 @@ import Privacidad from './pages/Privacidad';
 import Quejas from './pages/Quejas';
 
 export default function App() {
-  const location = useLocation();
-  const isAuthRoute = location.pathname === '/entrar' || location.pathname === '/registrar';
+  const ubicacion = useLocation();
+  const esRutaAuth = ubicacion.pathname === '/entrar' || ubicacion.pathname === '/registrar';
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [ubicacion.pathname]);
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      {!isAuthRoute && <Navbar />}
-      <main className={`flex-grow-1 ${isAuthRoute ? 'd-flex align-items-center justify-content-center bg-light' : ''}`}>
+      {!esRutaAuth && <Navbar />}
+      <main className={`flex-grow-1 ${esRutaAuth ? 'd-flex align-items-center justify-content-center bg-light' : ''}`}>
         <Routes>
           <Route path="/" element={<Menu />} />
           <Route path="/menu" element={<Navigate to="/" replace />} />
@@ -49,7 +54,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthRoute && <Footer />}
+      {!esRutaAuth && <Footer />}
       <CookieConsent />
     </div>
   );

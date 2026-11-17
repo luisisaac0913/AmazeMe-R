@@ -40,6 +40,7 @@ namespace AmazeMec.Server.DTOs
         public string Email { get; set; } = string.Empty;
         public DateTime FechaRegistro { get; set; }
         public int? PuntosReclamados { get; set; }
+        public string? FotoPerfil { get; set; }
     }
 
     public class PerfilUpdateRequest

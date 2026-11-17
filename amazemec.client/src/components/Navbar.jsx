@@ -95,7 +95,11 @@ export default function Navbar() {
                       title="Mi Perfil"
                     >
                       <div className="user-avatar-circle nav-avatar-sm">
-                        <span className="material-symbols-outlined fs-6">person</span>
+                        {user.fotoPerfil ? (
+                          <img src={user.fotoPerfil} alt={user.nombre} className="w-100 h-100 object-fit-cover rounded-circle" />
+                        ) : (
+                          <span className="material-symbols-outlined fs-6">person</span>
+                        )}
                       </div>
                       <span className="fw-medium">{user.nombre}</span>
                     </NavLink>

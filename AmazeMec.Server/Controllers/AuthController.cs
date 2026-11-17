@@ -93,7 +93,8 @@ namespace AmazeMec.Server.Controllers
                 Nombre = usuario.Nombre,
                 Email = usuario.Email,
                 FechaRegistro = usuario.Fecharegistro,
-                PuntosReclamados = puntosReclamados > 0 ? puntosReclamados : null
+                PuntosReclamados = puntosReclamados > 0 ? puntosReclamados : null,
+                FotoPerfil = usuario.FotoPerfil
             });
         }
 
@@ -176,7 +177,8 @@ namespace AmazeMec.Server.Controllers
                 Nombre = nuevoUsuario.Nombre,
                 Email = nuevoUsuario.Email,
                 FechaRegistro = nuevoUsuario.Fecharegistro,
-                PuntosReclamados = puntosReclamados > 0 ? puntosReclamados : null
+                PuntosReclamados = puntosReclamados > 0 ? puntosReclamados : null,
+                FotoPerfil = nuevoUsuario.FotoPerfil
             });
         }
 
@@ -208,7 +210,8 @@ namespace AmazeMec.Server.Controllers
                 Id = usuario.Id,
                 Nombre = usuario.Nombre,
                 Email = usuario.Email,
-                FechaRegistro = usuario.Fecharegistro
+                FechaRegistro = usuario.Fecharegistro,
+                FotoPerfil = usuario.FotoPerfil
             });
         }
 
@@ -266,8 +269,97 @@ namespace AmazeMec.Server.Controllers
                 Id = usuario.Id,
                 Nombre = usuario.Nombre,
                 Email = usuario.Email,
-                FechaRegistro = usuario.Fecharegistro
+                FechaRegistro = usuario.Fecharegistro,
+                FotoPerfil = usuario.FotoPerfil
             });
+        }
+
+        [Authorize]
+        [HttpPost("foto-perfil")]
+        public async Task<IActionResult> SubirFotoPerfil(IFormFile? archivo)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            if (archivo == null || archivo.Length == 0)
+            {
+                return BadRequest(new { error = "Selecciona una imagen válida." });
+            }
+
+            const long tamanoMaximo = 2 * 1024 * 1024;
+            if (archivo.Length > tamanoMaximo)
+            {
+                return BadRequest(new { error = "La imagen no debe superar los 2 MB." });
+            }
+
+            var tiposPermitidos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            };
+
+            if (!tiposPermitidos.Contains(archivo.ContentType))
+            {
+                return BadRequest(new { error = "Formato no admitido. Usa JPG, PNG o WEBP." });
+            }
+
+            using var memoria = new MemoryStream();
+            await archivo.CopyToAsync(memoria);
+            byte[] bytes = memoria.ToArray();
+
+            if (!EsImagenValida(bytes))
+            {
+                return BadRequest(new { error = "El archivo no corresponde a una imagen JPG, PNG o WEBP válida." });
+            }
+
+            var usuario = await _context.Usuario.FindAsync(userId);
+            if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+
+            usuario.FotoPerfil = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(bytes)}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new AuthUserResponse
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Email = usuario.Email,
+                FechaRegistro = usuario.Fecharegistro,
+                FotoPerfil = usuario.FotoPerfil
+            });
+        }
+
+        [Authorize]
+        [HttpDelete("foto-perfil")]
+        public async Task<IActionResult> EliminarFotoPerfil()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            var usuario = await _context.Usuario.FindAsync(userId);
+            if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+
+            usuario.FotoPerfil = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new AuthUserResponse
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Email = usuario.Email,
+                FechaRegistro = usuario.Fecharegistro,
+                FotoPerfil = null
+            });
+        }
+
+        private static bool EsImagenValida(byte[] bytes)
+        {
+            if (bytes.Length < 12) return false;
+            bool esJpeg = bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF;
+            bool esPng = bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
+            bool esWebp = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50;
+            return esJpeg || esPng || esWebp;
         }
 
         [Authorize]
