@@ -76,6 +76,19 @@ export default function Navbar() {
 
               <li className="nav-item">
                 <NavLink
+                  to="/foro"
+                  onClick={closeMenu}
+                  className={({ isActive }) => `nav-link nav-link-custom ${isActive ? 'active' : ''}`}
+                >
+                  <span className="d-inline-flex align-items-center gap-1">
+                    <span className="material-symbols-outlined fs-6">forum</span>
+                    <span>Foro</span>
+                  </span>
+                </NavLink>
+              </li>
+
+              <li className="nav-item">
+                <NavLink
                   to="/recompensas"
                   onClick={closeMenu}
                   className={({ isActive }) => `badge-recompensas text-decoration-none ${isActive ? 'active' : ''}`}

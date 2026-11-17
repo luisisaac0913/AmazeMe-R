@@ -11,6 +11,9 @@ namespace AmazeMec.Server.Data
         public DbSet<Compra> Compras { get; set; }
         public DbSet<Puntos> Puntos { get; set; }
         public DbSet<Preguntas> RespuestaCuestionario { get; set; }
+        public DbSet<PublicacionForo> PublicacionesForo { get; set; }
+        public DbSet<LikeForo> LikesForo { get; set; }
+        public DbSet<ComentarioForo> ComentariosForo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder constructorModelos)
         {
@@ -22,6 +25,10 @@ namespace AmazeMec.Server.Data
 
             constructorModelos.Entity<Usuario>()
                 .HasIndex(usuario => usuario.Email)
+                .IsUnique();
+
+            constructorModelos.Entity<LikeForo>()
+                .HasIndex(like => new { like.PublicacionId, like.UsuarioId })
                 .IsUnique();
         }
     }
