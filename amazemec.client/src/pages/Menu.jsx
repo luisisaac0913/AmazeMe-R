@@ -32,8 +32,7 @@ export default function Menu() {
 
   return (
     <div className="container my-4">
-      {/* Hero Section */}
-      <div className="p-4 p-md-5 mb-5 bg-white border hero-google text-center position-relative overflow-hidden">
+      <section className="p-4 p-md-5 mb-5 bg-white border hero-google text-center position-relative overflow-hidden">
         <div className="py-3 py-md-4 position-relative" style={{ zIndex: 2 }}>
           <h1 className="display-4 fw-bold mb-3 text-dark">¿No sabes qué regalar?</h1>
           <p className="lead text-muted mx-auto mb-4" style={{ maxWidth: '620px', lineHeight: 1.6 }}>
@@ -52,16 +51,15 @@ export default function Menu() {
             </a>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Metrics Row */}
-      <div className="row g-3 mb-5 text-center">
+      <section className="row g-3 mb-5 text-center" aria-label="Métricas de AmazeMe">
         <div className="col-6 col-md-4">
           <div className="card border rounded-4 p-4 bg-white h-100">
             <div className="d-flex justify-content-center mb-2">
               <span className="material-symbols-outlined text-success fs-2">verified</span>
             </div>
-            <h3 className="display-6 fw-bold text-dark mb-1">+500</h3>
+            <p className="display-6 fw-bold text-dark mb-1">+500</p>
             <p className="text-muted small mb-0 fw-medium">Regalos acertados</p>
           </div>
         </div>
@@ -70,7 +68,7 @@ export default function Menu() {
             <div className="d-flex justify-content-center mb-2">
               <span className="material-symbols-outlined text-success fs-2">savings</span>
             </div>
-            <h3 className="display-6 fw-bold text-dark mb-1">100%</h3>
+            <p className="display-6 fw-bold text-dark mb-1">100%</p>
             <p className="text-muted small mb-0 fw-medium">Ajustado a tu presupuesto</p>
           </div>
         </div>
@@ -79,14 +77,13 @@ export default function Menu() {
             <div className="d-flex justify-content-center mb-2">
               <span className="material-symbols-outlined text-success fs-2">timer</span>
             </div>
-            <h3 className="display-6 fw-bold text-dark mb-1">0</h3>
+            <p className="display-6 fw-bold text-dark mb-1">0</p>
             <p className="text-muted small mb-0 fw-medium">Minutos perdidos dudando</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* How it works */}
-      <div className="mb-5 pt-3" id="comoFunciona">
+      <section className="mb-5 pt-3" id="comoFunciona">
         <div className="text-center mb-4">
           <h2 className="h3 fw-bold text-dark mb-1">¿Cómo funciona?</h2>
           <p className="text-muted small">El camino más fácil para acertar con cualquier obsequio</p>
@@ -103,7 +100,7 @@ export default function Menu() {
                 />
               </div>
               <div className="card-body p-0">
-                <h5 className="fw-bold mb-2 text-dark">1. Responde la encuesta</h5>
+                <h3 className="h5 fw-bold mb-2 text-dark">1. Responde la encuesta</h3>
                 <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
                   Cuéntanos los gustos, personalidad y relación de esa persona especial.
                 </p>
@@ -121,7 +118,7 @@ export default function Menu() {
                 />
               </div>
               <div className="card-body p-0">
-                <h5 className="fw-bold mb-2 text-dark">2. Nosotros analizamos</h5>
+                <h3 className="h5 fw-bold mb-2 text-dark">2. Nosotros analizamos</h3>
                 <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
                   Procesamos los datos para seleccionar opciones que encajen a la perfección.
                 </p>
@@ -139,7 +136,7 @@ export default function Menu() {
                 />
               </div>
               <div className="card-body p-0">
-                <h5 className="fw-bold mb-2 text-dark">3. Gana recompensas</h5>
+                <h3 className="h5 fw-bold mb-2 text-dark">3. Gana recompensas</h3>
                 <p className="text-muted small mb-0" style={{ lineHeight: 1.5 }}>
                   Acumula Amazings con tus compras para canjear dinero en futuros regalos.
                 </p>
@@ -147,10 +144,9 @@ export default function Menu() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Featured Products Carousel */}
-      <div className="mb-5">
+      <section className="mb-5">
         <div className="card border rounded-4 p-4 p-lg-5 bg-white">
           <div className="text-center mb-4">
             <h2 className="h3 fw-bold text-dark">Productos más recomendados</h2>
@@ -172,7 +168,7 @@ export default function Menu() {
                   <span className="text-success fw-bold small text-uppercase mb-2 align-self-start" style={{ letterSpacing: '0.5px' }}>
                     {slides[currentSlide].tag}
                   </span>
-                  <h4 className="fw-bold text-dark mb-2">{slides[currentSlide].title}</h4>
+                  <h3 className="h4 fw-bold text-dark mb-2">{slides[currentSlide].title}</h3>
                   <p className="text-muted small mb-0" style={{ lineHeight: 1.6 }}>
                     {slides[currentSlide].desc}
                   </p>
@@ -213,10 +209,9 @@ export default function Menu() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Brand & Video Section */}
-      <div className="card border rounded-4 p-4 p-lg-5 mb-5 bg-white">
+      <section className="card border rounded-4 p-4 p-lg-5 mb-5 bg-white">
         <div className="d-flex align-items-center gap-3 mb-3">
           <img
             src="/Images/Iconos/Amazeme_logo.png"
@@ -242,7 +237,7 @@ export default function Menu() {
             </div>
           </div>
           <div className="col-lg-6">
-            <h4 className="fw-bold mb-3 text-dark">Innovación en la búsqueda de regalos</h4>
+            <h3 className="h4 fw-bold mb-3 text-dark">Innovación en la búsqueda de regalos</h3>
             <p className="text-muted mb-3" style={{ lineHeight: 1.6 }}>
               En Amaze<span className="brand-accent">Me</span> convertimos la indecisión de regalar en una experiencia guiada y certera. Hemos integrado un algoritmo de búsqueda que procesa gustos, personalidad y presupuesto para entregarte opciones con disponibilidad inmediata en catálogo digital.
             </p>
@@ -265,10 +260,9 @@ export default function Menu() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Rewards Promo Card */}
-      <div className="card border rounded-4 p-4 p-lg-5 mb-5 bg-white">
+      <section className="card border rounded-4 p-4 p-lg-5 mb-5 bg-white">
         <div className="row align-items-center gy-4">
           <div className="col-lg-7">
             <h2 className="h3 fw-bold text-dark mb-3">
@@ -297,9 +291,30 @@ export default function Menu() {
             />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* FAQ Section */}
+      <section className="card border rounded-4 p-4 p-lg-5 mb-5 bg-white">
+        <div className="row align-items-center gy-3">
+          <div className="col-lg-8">
+            <h2 className="h3 fw-bold text-dark mb-2">
+              Opiniones reales en nuestro <span className="brand-accent">Foro</span>
+            </h2>
+            <p className="text-muted mb-0" style={{ lineHeight: 1.6 }}>
+              Descubre qué opinan otros usuarios sobre los regalos que recibieron o recomendaron, comparte fotos y vota por tus ideas favoritas.
+            </p>
+          </div>
+          <div className="col-lg-4 text-lg-end">
+            <Link
+              to="/foro"
+              className="btn btn-success rounded-pill px-4 text-white fw-medium d-inline-flex align-items-center gap-2"
+            >
+              <span>Explorar el Foro</span>
+              <span className="material-symbols-outlined fs-6">forum</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="mb-4">
         <div className="card border rounded-4 p-4 p-lg-5 bg-white">
           <div className="text-center mb-4">
@@ -309,7 +324,7 @@ export default function Menu() {
 
           <div className="accordion accordion-flush" id="SPreguntas">
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
-              <h2 className="accordion-header">
+              <h3 className="accordion-header">
                 <button
                   className={`accordion-button fw-medium text-dark ${openFaq === 'faqPrivacidad' ? '' : 'collapsed'}`}
                   type="button"
@@ -334,7 +349,7 @@ export default function Menu() {
             </div>
 
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
-              <h2 className="accordion-header">
+              <h3 className="accordion-header">
                 <button
                   className={`accordion-button fw-medium text-dark ${openFaq === 'faqAmazings' ? '' : 'collapsed'}`}
                   type="button"
@@ -358,7 +373,7 @@ export default function Menu() {
             </div>
 
             <div className="accordion-item border rounded-3 mb-2 overflow-hidden">
-              <h2 className="accordion-header">
+              <h3 className="accordion-header">
                 <button
                   className={`accordion-button fw-medium text-dark ${openFaq === 'faqDatos' ? '' : 'collapsed'}`}
                   type="button"
@@ -379,7 +394,7 @@ export default function Menu() {
             </div>
 
             <div className="accordion-item border rounded-3 overflow-hidden">
-              <h2 className="accordion-header">
+              <h3 className="accordion-header">
                 <button
                   className={`accordion-button fw-medium text-dark ${openFaq === 'faqCompras' ? '' : 'collapsed'}`}
                   type="button"
@@ -388,7 +403,7 @@ export default function Menu() {
                 >
                   ¿Cómo se registran las compras?
                 </button>
-              </h2>
+              </h3>
               <div
                 id="faqCompras"
                 className={`accordion-collapse collapse ${openFaq === 'faqCompras' ? 'show' : ''}`}

@@ -13,6 +13,7 @@ import Recompensas from './pages/Recompensas';
 import Terminos from './pages/Terminos';
 import Privacidad from './pages/Privacidad';
 import Quejas from './pages/Quejas';
+import Foro from './pages/Foro';
 
 export default function App() {
   const ubicacion = useLocation();
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/" element={<Menu />} />
           <Route path="/menu" element={<Navigate to="/" replace />} />
           <Route path="/cuestionario" element={<Cuestionario />} />
+          <Route path="/foro" element={<Foro />} />
           <Route path="/entrar" element={<Login />} />
           <Route path="/registrar" element={<Register />} />
           <Route

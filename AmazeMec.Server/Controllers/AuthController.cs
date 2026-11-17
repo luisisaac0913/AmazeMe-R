@@ -427,6 +427,28 @@ namespace AmazeMec.Server.Controllers
                 _context.Compras.RemoveRange(compras);
             }
 
+            var likesUsuario = await _context.LikesForo
+                .Where(l => l.UsuarioId == userId)
+                .ToListAsync();
+            if (likesUsuario.Count > 0) _context.LikesForo.RemoveRange(likesUsuario);
+
+            var comentariosUsuario = await _context.ComentariosForo
+                .Where(c => c.UsuarioId == userId)
+                .ToListAsync();
+            if (comentariosUsuario.Count > 0) _context.ComentariosForo.RemoveRange(comentariosUsuario);
+
+            var publicacionesUsuario = await _context.PublicacionesForo
+                .Include(p => p.Likes)
+                .Include(p => p.Comentarios)
+                .Where(p => p.UsuarioId == userId)
+                .ToListAsync();
+            foreach (var pub in publicacionesUsuario)
+            {
+                if (pub.Likes.Count > 0) _context.LikesForo.RemoveRange(pub.Likes);
+                if (pub.Comentarios.Count > 0) _context.ComentariosForo.RemoveRange(pub.Comentarios);
+            }
+            if (publicacionesUsuario.Count > 0) _context.PublicacionesForo.RemoveRange(publicacionesUsuario);
+
             _context.Usuario.Remove(usuario);
             await _context.SaveChangesAsync();
 
