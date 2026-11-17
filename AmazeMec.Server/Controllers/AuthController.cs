@@ -42,9 +42,10 @@ namespace AmazeMec.Server.Controllers
             }
 
             string identificadorLimpio = request.Identificador.Trim();
-            string identificadorEmail = identificadorLimpio.ToLowerInvariant();
+            string identificadorLower = identificadorLimpio.ToLowerInvariant();
 
-            var usuario = await _context.Usuario.FirstOrDefaultAsync(x => x.Nombre == identificadorLimpio || x.Email == identificadorEmail);
+            var usuario = await _context.Usuario.FirstOrDefaultAsync(x =>
+                x.Nombre.ToLower() == identificadorLower || x.Email.ToLower() == identificadorLower);
 
             bool contraseñaValida = usuario != null
                 ? BCrypt.Net.BCrypt.Verify(request.Contraseña, usuario.Contraseña)
@@ -125,12 +126,19 @@ namespace AmazeMec.Server.Controllers
             }
 
             string nombreLimpio = request.Nombre.Trim();
+            string nombreLower = nombreLimpio.ToLowerInvariant();
             string emailLimpio = request.Email.Trim().ToLowerInvariant();
 
-            var existente = await _context.Usuario.FirstOrDefaultAsync(x => x.Nombre == nombreLimpio || x.Email == emailLimpio);
-            if (existente != null)
+            bool correoExistente = await _context.Usuario.AnyAsync(x => x.Email.ToLower() == emailLimpio);
+            if (correoExistente)
             {
-                return Conflict(new { error = "El usuario o correo electrónico ya se encuentra registrado." });
+                return Conflict(new { error = "El correo electrónico ya se encuentra registrado." });
+            }
+
+            bool nombreExistente = await _context.Usuario.AnyAsync(x => x.Nombre.ToLower() == nombreLower);
+            if (nombreExistente)
+            {
+                return Conflict(new { error = "El nombre de usuario ya se encuentra registrado." });
             }
 
             var nuevoUsuario = new Usuario
@@ -141,8 +149,15 @@ namespace AmazeMec.Server.Controllers
                 Fecharegistro = DateTime.UtcNow
             };
 
-            _context.Usuario.Add(nuevoUsuario);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Usuario.Add(nuevoUsuario);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { error = "El usuario o correo electrónico ya se encuentra registrado." });
+            }
 
             // Iniciar sesión automáticamente tras el registro
             HttpContext.Session.SetInt32("UsuarioId", nuevoUsuario.Id);
@@ -231,6 +246,7 @@ namespace AmazeMec.Server.Controllers
             }
 
             string nuevoNombre = request.Nombre.Trim();
+            string nuevoNombreLower = nuevoNombre.ToLowerInvariant();
             string nuevoEmail = request.Email.Trim().ToLowerInvariant();
 
             if (!Regex.IsMatch(nuevoEmail, @"^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook|yahoo|icloud)\.(com|es|com\.mx|net|org)$", RegexOptions.IgnoreCase))
@@ -238,7 +254,8 @@ namespace AmazeMec.Server.Controllers
                 return BadRequest(new { error = "El correo es inválido o no admitido." });
             }
 
-            bool duplicado = await _context.Usuario.AnyAsync(u => u.Id != userId && (u.Nombre == nuevoNombre || u.Email == nuevoEmail));
+            bool duplicado = await _context.Usuario.AnyAsync(u =>
+                u.Id != userId && (u.Nombre.ToLower() == nuevoNombreLower || u.Email.ToLower() == nuevoEmail));
             if (duplicado)
             {
                 return Conflict(new { error = "El nombre de usuario o correo ya está en uso." });
@@ -246,7 +263,14 @@ namespace AmazeMec.Server.Controllers
 
             usuario.Nombre = nuevoNombre;
             usuario.Email = nuevoEmail;
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { error = "El nombre de usuario o correo ya está en uso." });
+            }
 
             // Refrescar claims
             var reclamos = new List<Claim>

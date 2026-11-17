@@ -14,14 +14,20 @@ import Terminos from './pages/Terminos';
 import Privacidad from './pages/Privacidad';
 import Quejas from './pages/Quejas';
 import Foro from './pages/Foro';
+import { inicializarAnalitica, registrarVistaPagina } from './utils/analitica';
 
 export default function App() {
   const ubicacion = useLocation();
   const esRutaAuth = ubicacion.pathname === '/entrar' || ubicacion.pathname === '/registrar';
 
   useEffect(() => {
+    inicializarAnalitica();
+  }, []);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [ubicacion.pathname]);
+    registrarVistaPagina(ubicacion.pathname + ubicacion.search);
+  }, [ubicacion.pathname, ubicacion.search]);
 
   return (
     <div className="d-flex flex-column min-vh-100">

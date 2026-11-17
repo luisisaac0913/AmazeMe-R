@@ -192,6 +192,14 @@ export default function Privacidad() {
                       <td>Guarda tu preferencia sobre el aviso de cookies para no volver a molestarte.</td>
                       <td>1 año</td>
                     </tr>
+                    <tr>
+                      <td>
+                        <code>_ga</code> / <code>_ga_*</code>
+                      </td>
+                      <td>Analítica (Google Analytics / GTM, solo si aceptas todas)</td>
+                      <td>Mide visitas, navegación entre páginas y rendimiento del sitio de forma agregada.</td>
+                      <td>Hasta 2 años</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

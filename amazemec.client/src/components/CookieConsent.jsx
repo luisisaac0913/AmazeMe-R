@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { inicializarAnalitica } from '../utils/analitica';
 
 const COOKIE_KEY = 'AmazeMe_CookiesAccepted';
 
@@ -16,8 +17,12 @@ export default function CookieConsent() {
     try {
       localStorage.setItem(COOKIE_KEY, tipo);
       document.cookie = `${COOKIE_KEY}=${tipo}; path=/; max-age=31536000; SameSite=Lax`;
+      if (tipo === 'all') {
+        inicializarAnalitica();
+      }
     } catch {
-      // Ignorar si almacenamiento bloqueado
+      setVisible(false);
+      return;
     }
     setVisible(false);
   };

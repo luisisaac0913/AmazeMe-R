@@ -161,7 +161,7 @@ app.Use(async (contexto, siguiente) =>
     contexto.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
     contexto.Response.Headers.Append(
         "Content-Security-Policy",
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https://m.media-amazon.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://formspree.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://formspree.io");
+        "default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https://m.media-amazon.com https://www.google-analytics.com https://www.googletagmanager.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://formspree.io https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://formspree.io");
     await siguiente();
 });
 
