@@ -27,9 +27,8 @@ function PerfilDatosForm({ user, onUpdate }) {
 
   return (
     <div className="card border rounded-4 p-4 p-md-5 mb-4 bg-white shadow-sm">
-      <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-        <span className="material-symbols-outlined text-success">badge</span>
-        <span>Datos Personales</span>
+      <h5 className="fw-bold text-dark mb-3">
+        Datos Personales
       </h5>
 
       {success && (
@@ -136,9 +135,8 @@ function PasswordForm({ onChangePassword }) {
 
   return (
     <div className="card border rounded-4 p-4 p-md-5 mb-4 bg-white shadow-sm">
-      <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-        <span className="material-symbols-outlined text-success">lock</span>
-        <span>Seguridad y Contraseña</span>
+      <h5 className="fw-bold text-dark mb-3">
+        Seguridad y Contraseña
       </h5>
 
       {success && (
@@ -240,9 +238,8 @@ function EliminarCuentaCard({ onDelete }) {
 
   return (
     <div className="card border border-danger-subtle rounded-4 p-4 p-md-5 bg-white shadow-sm">
-      <h5 className="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
-        <span className="material-symbols-outlined">delete_forever</span>
-        <span>Eliminar cuenta</span>
+      <h5 className="fw-bold text-danger mb-2">
+        Eliminar cuenta
       </h5>
       <p className="text-muted small mb-3" style={{ lineHeight: 1.6 }}>
         Conforme a tus derechos de cancelación (ARCO), puedes eliminar permanentemente tu cuenta, tu historial de cuestionarios, compras y puntos Amazings. Esta acción no se puede deshacer.
@@ -385,9 +382,8 @@ function FotoPerfilCard({ usuario, alSubirFoto, alEliminarFoto }) {
 
   return (
     <div className="card border rounded-4 p-4 p-md-5 mb-4 bg-white shadow-sm">
-      <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-        <span className="material-symbols-outlined text-success">account_circle</span>
-        <span>Foto de Perfil</span>
+      <h5 className="fw-bold text-dark mb-3">
+        Foto de Perfil
       </h5>
 
       {exito && (
@@ -472,7 +468,7 @@ export default function Perfil() {
               )}
             </div>
             <div>
-              <h1 className="h3 fw-bold text-dark mb-0">Cuenta de AmazeMe</h1>
+              <h1 className="h3 fw-bold text-dark mb-0">Perfil</h1>
               <p className="text-muted small mb-0">Administra tu información personal y opciones de seguridad</p>
             </div>
           </div>

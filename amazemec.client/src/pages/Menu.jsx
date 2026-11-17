@@ -333,7 +333,7 @@ export default function Menu() {
                 >
                   Privacidad y uso de información
                 </button>
-              </h2>
+              </h3>
               <div
                 id="faqPrivacidad"
                 className={`accordion-collapse collapse ${openFaq === 'faqPrivacidad' ? 'show' : ''}`}
@@ -358,7 +358,7 @@ export default function Menu() {
                 >
                   ¿Cómo funcionan los Amazings?
                 </button>
-              </h2>
+              </h3>
               <div
                 id="faqAmazings"
                 className={`accordion-collapse collapse ${openFaq === 'faqAmazings' ? 'show' : ''}`}
@@ -382,7 +382,7 @@ export default function Menu() {
                 >
                   ¿Qué datos solicita AmazeMe para operar?
                 </button>
-              </h2>
+              </h3>
               <div
                 id="faqDatos"
                 className={`accordion-collapse collapse ${openFaq === 'faqDatos' ? 'show' : ''}`}
