@@ -181,17 +181,35 @@ export default function Menu() {
             </div>
 
             {/* Carousel navigation controls */}
-            <div className="d-flex justify-content-center gap-2 mt-3">
-              {slides.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`btn btn-sm rounded-circle p-1 ${currentSlide === idx ? 'btn-success' : 'btn-outline-secondary'}`}
-                  style={{ width: '12px', height: '12px' }}
-                  onClick={() => setCurrentSlide(idx)}
-                  aria-label={`Slide ${idx + 1}`}
-                />
-              ))}
+            <div className="d-flex justify-content-center align-items-center gap-3 mt-3">
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center p-2"
+                onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+                aria-label="Slide anterior"
+              >
+                <span className="material-symbols-outlined fs-6">chevron_left</span>
+              </button>
+              <div className="d-flex align-items-center gap-2">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`btn btn-sm rounded-circle p-0 ${currentSlide === idx ? 'btn-success' : 'btn-outline-secondary'}`}
+                    style={{ width: '14px', height: '14px', minWidth: '14px' }}
+                    onClick={() => setCurrentSlide(idx)}
+                    aria-label={`Slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center p-2"
+                onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+                aria-label="Slide siguiente"
+              >
+                <span className="material-symbols-outlined fs-6">chevron_right</span>
+              </button>
             </div>
           </div>
         </div>

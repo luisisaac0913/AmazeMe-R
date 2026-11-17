@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function PerfilDatosForm({ user, onUpdate }) {
@@ -48,8 +49,9 @@ function PerfilDatosForm({ user, onUpdate }) {
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label small fw-semibold text-secondary">Nombre de usuario</label>
+          <label htmlFor="perfilNombre" className="form-label small fw-semibold text-secondary">Nombre de usuario</label>
           <input
+            id="perfilNombre"
             type="text"
             className="form-control"
             value={nombre}
@@ -59,8 +61,9 @@ function PerfilDatosForm({ user, onUpdate }) {
         </div>
 
         <div className="mb-4">
-          <label className="form-label small fw-semibold text-secondary">Correo electrónico</label>
+          <label htmlFor="perfilEmail" className="form-label small fw-semibold text-secondary">Correo electrónico</label>
           <input
+            id="perfilEmail"
             type="email"
             className="form-control"
             value={email}
@@ -155,8 +158,9 @@ function PasswordForm({ onChangePassword }) {
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label small fw-semibold text-secondary">Contraseña actual</label>
+          <label htmlFor="perfilPassActual" className="form-label small fw-semibold text-secondary">Contraseña actual</label>
           <input
+            id="perfilPassActual"
             type="password"
             className="form-control"
             value={contraseñaActual}
@@ -167,8 +171,9 @@ function PasswordForm({ onChangePassword }) {
         </div>
 
         <div className="mb-3">
-          <label className="form-label small fw-semibold text-secondary">Nueva contraseña</label>
+          <label htmlFor="perfilPassNueva" className="form-label small fw-semibold text-secondary">Nueva contraseña</label>
           <input
+            id="perfilPassNueva"
             type="password"
             className="form-control"
             value={contraseñaNueva}
@@ -179,8 +184,9 @@ function PasswordForm({ onChangePassword }) {
         </div>
 
         <div className="mb-4">
-          <label className="form-label small fw-semibold text-secondary">Confirmar nueva contraseña</label>
+          <label htmlFor="perfilPassConfirm" className="form-label small fw-semibold text-secondary">Confirmar nueva contraseña</label>
           <input
+            id="perfilPassConfirm"
             type="password"
             className="form-control"
             value={confirmarContraseñaNueva}
@@ -208,8 +214,99 @@ function PasswordForm({ onChangePassword }) {
   );
 }
 
+function EliminarCuentaCard({ onDelete }) {
+  const navigate = useNavigate();
+  const [confirmando, setConfirmando] = useState(false);
+  const [textoConfirmacion, setTextoConfirmacion] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleEliminar = async () => {
+    if (textoConfirmacion.trim().toUpperCase() !== 'ELIMINAR') {
+      setError('Escribe ELIMINAR para confirmar la baja definitiva.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await onDelete();
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card border border-danger-subtle rounded-4 p-4 p-md-5 bg-white shadow-sm">
+      <h5 className="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+        <span className="material-symbols-outlined">delete_forever</span>
+        <span>Eliminar cuenta</span>
+      </h5>
+      <p className="text-muted small mb-3" style={{ lineHeight: 1.6 }}>
+        Conforme a tus derechos de cancelación (ARCO), puedes eliminar permanentemente tu cuenta, tu historial de cuestionarios, compras y puntos Amazings. Esta acción no se puede deshacer.
+      </p>
+
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show mb-3 d-flex align-items-center gap-2">
+          <span className="material-symbols-outlined fs-5">error</span>
+          <div>{error}</div>
+          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+        </div>
+      )}
+
+      {!confirmando ? (
+        <button
+          type="button"
+          className="btn btn-outline-danger rounded-pill px-4"
+          onClick={() => setConfirmando(true)}
+        >
+          Solicitar eliminación de cuenta
+        </button>
+      ) : (
+        <div className="p-3 bg-light rounded-3 border">
+          <label htmlFor="confirmarEliminarCuenta" className="form-label small fw-semibold text-dark">
+            Escribe <strong>ELIMINAR</strong> para confirmar:
+          </label>
+          <input
+            id="confirmarEliminarCuenta"
+            type="text"
+            className="form-control mb-3"
+            placeholder="ELIMINAR"
+            value={textoConfirmacion}
+            onChange={(e) => setTextoConfirmacion(e.target.value)}
+          />
+          <div className="d-flex gap-2 justify-content-end">
+            <button
+              type="button"
+              className="btn btn-outline-secondary rounded-pill px-3"
+              disabled={loading}
+              onClick={() => {
+                setConfirmando(false);
+                setTextoConfirmacion('');
+                setError(null);
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger rounded-pill px-4"
+              disabled={loading}
+              onClick={handleEliminar}
+            >
+              {loading ? 'Eliminando...' : 'Eliminar definitivamente'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Perfil() {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { user, updateProfile, changePassword, deleteAccount } = useAuth();
 
   return (
     <div className="container my-5">
@@ -227,6 +324,7 @@ export default function Perfil() {
 
           <PerfilDatosForm key={user?.id || 'guest'} user={user} onUpdate={updateProfile} />
           <PasswordForm onChangePassword={changePassword} />
+          <EliminarCuentaCard onDelete={deleteAccount} />
         </div>
       </div>
     </div>
