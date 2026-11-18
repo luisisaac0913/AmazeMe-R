@@ -125,7 +125,7 @@ Para mantener la estabilidad del repositorio **AmazeMec** durante entregas conti
 ### 8. Auditoría Periódica de Normativas y Actualización Documental
 Todo cambio funcional relevante en **AmazeMe** (como la adición de paginación, subida múltiple de imágenes o nuevas integraciones de afiliados) debe reflejarse de forma sincronizada en tres puntos antes de considerarse terminado:
 1. **Código de cumplimiento en UI:** Páginas `/privacidad` (`Privacidad.jsx`) y `/terminos` (`Terminos.jsx`).
-2. **Documentación técnica de repositorio:** `ESTANDARES_NORMATIVAS_Y_PRACTICAS.md`.
+2. **Documentación técnica de repositorio:** `ESTANDARES NORMATIVAS Y PRACTICAS.md`.
 3. **Respaldo documental en Google Drive:** Actualización en sitio de los archivos `.md` correspondientes dentro de la carpeta oficial `AmazeMe` sin eliminar históricos ni bitácoras previas.
 
 

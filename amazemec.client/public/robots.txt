@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /perfil
+Disallow: /recompensas
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /perfil
+Disallow: /recompensas
+
+User-agent: Mediapartners-Google
+Allow: /
+
+Sitemap: https://amazeme.site/sitemap.xml
+
