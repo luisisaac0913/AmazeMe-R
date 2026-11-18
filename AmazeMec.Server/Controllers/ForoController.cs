@@ -91,34 +91,58 @@ namespace AmazeMec.Server.Controllers
                         p.Titulo,
                         p.Contenido,
                         p.RegaloMencionado,
-                        p.ImagenUrl,
+                        CantidadImagenes = p.ImagenUrl == null || p.ImagenUrl == ""
+                            ? 0
+                            : p.ImagenUrl.Substring(0, 1) == "["
+                                ? (p.ImagenUrl.Length - p.ImagenUrl.Replace("data:", "").Length) / 5
+                                : 1,
                         p.Categoria,
                         p.Calificacion,
                         p.FechaCreacion,
                         p.UsuarioId,
                         AutorNombre = p.Usuario != null ? p.Usuario.Nombre : "Usuario",
-                        AutorFoto = p.Usuario != null ? p.Usuario.FotoPerfil : null,
+                        VersionFotoAutor = p.Usuario != null && p.Usuario.FotoPerfil != null ? (int?)p.Usuario.FotoPerfil.Length : null,
                         TotalLikes = p.Likes.Count,
                         DioLike = usuarioActualId.HasValue && p.Likes.Any(l => l.UsuarioId == usuarioActualId.Value),
-                        TotalComentarios = p.Comentarios.Count,
-                        Comentarios = p.Comentarios
-                            .OrderBy(c => c.FechaCreacion)
-                            .Select(c => new ComentarioForoResponse
-                            {
-                                Id = c.Id,
-                                Contenido = c.Contenido,
-                                FechaCreacion = c.FechaCreacion,
-                                AutorNombre = c.Usuario != null ? c.Usuario.Nombre : "Usuario",
-                                AutorFoto = c.Usuario != null ? c.Usuario.FotoPerfil : null,
-                                EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
-                            })
-                            .ToList()
+                        TotalComentarios = p.Comentarios.Count
                     })
                     .ToListAsync();
 
+                var idsPublicaciones = filas.Select(f => f.Id).ToList();
+
+                var comentarios = await _context.ComentariosForo
+                    .AsNoTracking()
+                    .Where(c => idsPublicaciones.Contains(c.PublicacionId))
+                    .OrderBy(c => c.FechaCreacion)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.PublicacionId,
+                        c.Contenido,
+                        c.FechaCreacion,
+                        c.UsuarioId,
+                        AutorNombre = c.Usuario != null ? c.Usuario.Nombre : "Usuario",
+                        VersionFoto = c.Usuario != null && c.Usuario.FotoPerfil != null ? (int?)c.Usuario.FotoPerfil.Length : null
+                    })
+                    .ToListAsync();
+
+                var comentariosPorPublicacion = comentarios
+                    .GroupBy(c => c.PublicacionId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(c => new ComentarioForoResponse
+                        {
+                            Id = c.Id,
+                            Contenido = c.Contenido,
+                            FechaCreacion = c.FechaCreacion,
+                            AutorNombre = c.AutorNombre,
+                            AutorFoto = ConstruirUrlAvatar(c.UsuarioId, c.VersionFoto),
+                            EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
+                        }).ToList());
+
                 var publicaciones = filas.Select(p =>
                 {
-                    var imagenes = DeserializarImagenes(p.ImagenUrl);
+                    var imagenes = ConstruirUrlsImagenes(p.Id, p.CantidadImagenes);
                     return new PublicacionForoResponse
                     {
                         Id = p.Id,
@@ -131,12 +155,12 @@ namespace AmazeMec.Server.Controllers
                         Calificacion = p.Calificacion,
                         FechaCreacion = p.FechaCreacion,
                         AutorNombre = p.AutorNombre,
-                        AutorFoto = p.AutorFoto,
+                        AutorFoto = ConstruirUrlAvatar(p.UsuarioId, p.VersionFotoAutor),
                         EsPropia = usuarioActualId.HasValue && p.UsuarioId == usuarioActualId.Value,
                         TotalLikes = p.TotalLikes,
                         DioLike = p.DioLike,
                         TotalComentarios = p.TotalComentarios,
-                        Comentarios = p.Comentarios
+                        Comentarios = comentariosPorPublicacion.TryGetValue(p.Id, out var lista) ? lista : new List<ComentarioForoResponse>()
                     };
                 }).ToList();
 
@@ -175,12 +199,16 @@ namespace AmazeMec.Server.Controllers
                         p.Titulo,
                         p.Contenido,
                         p.RegaloMencionado,
-                        p.ImagenUrl,
+                        CantidadImagenes = p.ImagenUrl == null || p.ImagenUrl == ""
+                            ? 0
+                            : p.ImagenUrl.Substring(0, 1) == "["
+                                ? (p.ImagenUrl.Length - p.ImagenUrl.Replace("data:", "").Length) / 5
+                                : 1,
                         p.Categoria,
                         p.Calificacion,
                         p.FechaCreacion,
+                        VersionFotoAutor = p.Usuario != null && p.Usuario.FotoPerfil != null ? (int?)p.Usuario.FotoPerfil.Length : null,
                         AutorNombre = p.Usuario != null ? p.Usuario.Nombre : "Usuario",
-                        AutorFoto = p.Usuario != null ? p.Usuario.FotoPerfil : null,
                         TotalLikes = p.Likes.Count,
                         DioLike = p.Likes.Any(l => l.UsuarioId == usuarioId.Value),
                         TotalComentarios = p.Comentarios.Count
@@ -189,7 +217,7 @@ namespace AmazeMec.Server.Controllers
 
                 var resultado = lista.Select(p =>
                 {
-                    var imagenes = DeserializarImagenes(p.ImagenUrl);
+                    var imagenes = ConstruirUrlsImagenes(p.Id, p.CantidadImagenes);
                     return new PublicacionForoResponse
                     {
                         Id = p.Id,
@@ -202,7 +230,7 @@ namespace AmazeMec.Server.Controllers
                         Calificacion = p.Calificacion,
                         FechaCreacion = p.FechaCreacion,
                         AutorNombre = p.AutorNombre,
-                        AutorFoto = p.AutorFoto,
+                        AutorFoto = ConstruirUrlAvatar(usuarioId.Value, p.VersionFotoAutor),
                         EsPropia = true,
                         TotalLikes = p.TotalLikes,
                         DioLike = p.DioLike,
@@ -325,13 +353,13 @@ namespace AmazeMec.Server.Controllers
                 Titulo = publicacion.Titulo,
                 Contenido = publicacion.Contenido,
                 RegaloMencionado = publicacion.RegaloMencionado,
-                ImagenUrl = imagenesDataUrl.FirstOrDefault(),
-                Imagenes = imagenesDataUrl,
+                ImagenUrl = imagenesDataUrl.Count > 0 ? $"/api/foro/{publicacion.Id}/imagenes/0" : null,
+                Imagenes = ConstruirUrlsImagenes(publicacion.Id, imagenesDataUrl.Count),
                 Categoria = publicacion.Categoria,
                 Calificacion = publicacion.Calificacion,
                 FechaCreacion = publicacion.FechaCreacion,
                 AutorNombre = autor?.Nombre ?? "Usuario",
-                AutorFoto = autor?.FotoPerfil,
+                AutorFoto = ConstruirUrlAvatar(usuarioId.Value, autor?.FotoPerfil?.Length),
                 EsPropia = true,
                 TotalLikes = 0,
                 DioLike = false,
@@ -423,7 +451,7 @@ namespace AmazeMec.Server.Controllers
                 Contenido = comentario.Contenido,
                 FechaCreacion = comentario.FechaCreacion,
                 AutorNombre = autor?.Nombre ?? "Usuario",
-                AutorFoto = autor?.FotoPerfil,
+                AutorFoto = ConstruirUrlAvatar(usuarioId.Value, autor?.FotoPerfil?.Length),
                 EsPropio = true
             });
         }
@@ -481,6 +509,82 @@ namespace AmazeMec.Server.Controllers
 
             return Ok(new { mensaje = "Comentario eliminado." });
         }
+
+        [HttpGet("{id:int}/imagenes/{indice:int}")]
+        [DisableRateLimiting]
+        [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Client)]
+        public async Task<IActionResult> ObtenerImagenPublicacion(int id, int indice)
+        {
+            if (indice < 0 || indice >= 4) return NotFound();
+
+            var valor = await _context.PublicacionesForo
+                .AsNoTracking()
+                .Where(p => p.Id == id)
+                .Select(p => p.ImagenUrl)
+                .FirstOrDefaultAsync();
+
+            var imagenes = DeserializarImagenes(valor);
+            if (indice >= imagenes.Count) return NotFound();
+
+            return ResponderImagen(imagenes[indice]);
+        }
+
+        [HttpGet("avatar/{usuarioId:int}")]
+        [DisableRateLimiting]
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
+        public async Task<IActionResult> ObtenerAvatar(int usuarioId)
+        {
+            bool participaEnForo = await _context.PublicacionesForo.AnyAsync(p => p.UsuarioId == usuarioId)
+                || await _context.ComentariosForo.AnyAsync(c => c.UsuarioId == usuarioId);
+            if (!participaEnForo) return NotFound();
+
+            var foto = await _context.Usuario
+                .AsNoTracking()
+                .Where(u => u.Id == usuarioId)
+                .Select(u => u.FotoPerfil)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(foto)) return NotFound();
+            return ResponderImagen(foto);
+        }
+
+        private static readonly HashSet<string> TiposImagenPermitidos = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg", "image/png", "image/webp"
+        };
+
+        private IActionResult ResponderImagen(string valor)
+        {
+            if (!valor.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound();
+            }
+
+            int coma = valor.IndexOf(',');
+            if (coma < 0) return NotFound();
+
+            string tipo = valor.Substring(5, coma - 5).Split(';')[0];
+            if (!TiposImagenPermitidos.Contains(tipo)) return NotFound();
+
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(valor.Substring(coma + 1));
+                if (!EsImagenValida(bytes)) return NotFound();
+                return File(bytes, tipo);
+            }
+            catch (FormatException)
+            {
+                return NotFound();
+            }
+        }
+
+        private static List<string> ConstruirUrlsImagenes(int idPublicacion, int cantidad) =>
+            Enumerable.Range(0, Math.Clamp(cantidad, 0, 4))
+                .Select(indice => $"/api/foro/{idPublicacion}/imagenes/{indice}")
+                .ToList();
+
+        private static string? ConstruirUrlAvatar(int usuarioId, int? version) =>
+            version.HasValue ? $"/api/foro/avatar/{usuarioId}?v={version.Value}" : null;
 
         private static List<string> DeserializarImagenes(string? valor)
         {

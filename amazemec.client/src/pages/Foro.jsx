@@ -99,6 +99,41 @@ export default function Foro() {
       lector.readAsDataURL(archivo);
     });
 
+  const comprimirImagen = (archivo) =>
+    new Promise((resolver) => {
+      const url = URL.createObjectURL(archivo);
+      const imagen = new Image();
+      imagen.onload = () => {
+        const ladoMaximo = 1280;
+        const escala = Math.min(1, ladoMaximo / Math.max(imagen.width, imagen.height));
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.round(imagen.width * escala);
+        lienzo.height = Math.round(imagen.height * escala);
+        const contexto = lienzo.getContext('2d');
+        contexto.fillStyle = '#ffffff';
+        contexto.fillRect(0, 0, lienzo.width, lienzo.height);
+        contexto.drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+        URL.revokeObjectURL(url);
+        lienzo.toBlob(
+          (blob) => {
+            if (!blob || blob.size >= archivo.size) {
+              resolver(archivo);
+              return;
+            }
+            const nombre = archivo.name.replace(/\.[^.]+$/, '') + '.jpg';
+            resolver(new File([blob], nombre, { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          0.8
+        );
+      };
+      imagen.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolver(archivo);
+      };
+      imagen.src = url;
+    });
+
   const manejarSeleccionImagenes = async (evento) => {
     establecerError(null);
     const seleccionados = Array.from(evento.target.files || []);
@@ -109,15 +144,16 @@ export default function Foro() {
     const combinados = [...imagenesArchivos];
     const nuevasVistas = [...vistasPreviasImagenes];
 
-    for (const archivo of seleccionados) {
+    for (const original of seleccionados) {
       if (combinados.length >= 4) {
         establecerError('Puedes adjuntar máximo 4 fotos por publicación.');
         break;
       }
-      if (!tiposPermitidos.includes(archivo.type)) {
+      if (!tiposPermitidos.includes(original.type)) {
         establecerError('Formato no admitido. Usa JPG, PNG o WEBP.');
         continue;
       }
+      const archivo = await comprimirImagen(original);
       if (archivo.size > 3 * 1024 * 1024) {
         establecerError('Cada imagen debe pesar máximo 3 MB.');
         continue;
