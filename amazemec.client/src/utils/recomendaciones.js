@@ -393,7 +393,8 @@ export function generarRecomendaciones(datosFormulario) {
     const entrega = dias <= 2 ? 'Envío Express (24 hrs)' : dias <= 5 ? 'Entrega en 2-3 días' : 'Envío estándar gratis';
     const coincidencia = Math.max(72, Math.min(99, puntaje));
     const imagenRespaldo = crearImagenProductoSvg(producto);
-    const imagen = IMAGENES_AMAZON_VERIFICADAS[producto.id] || imagenRespaldo;
+    const imagenBusqueda = `https://tse1.mm.bing.net/th?q=${encodeURIComponent(`${producto.nombre} amazon`)}&w=480&h=480&c=7&rs=1&p=0`;
+    const imagen = IMAGENES_AMAZON_VERIFICADAS[producto.id] || imagenBusqueda;
 
     return {
       ...producto,
@@ -410,7 +411,7 @@ export function generarRecomendaciones(datosFormulario) {
 
   let evaluados = CATALOGO_PRODUCTOS.map((p) => evaluarProducto(p, false)).filter(Boolean);
 
-  if (evaluados.length < 20) {
+  if (evaluados.length < 3) {
     const idsPresentes = new Set(evaluados.map((p) => p.id));
     const extras = CATALOGO_PRODUCTOS
       .filter((p) => !idsPresentes.has(p.id))
@@ -420,5 +421,5 @@ export function generarRecomendaciones(datosFormulario) {
 
   evaluados.sort((a, b) => b.coincidencia - a.coincidencia || a.precio - b.precio);
 
-  return evaluados.slice(0, Math.max(20, Math.min(24, evaluados.length)));
+  return evaluados.slice(0, 3);
 }
