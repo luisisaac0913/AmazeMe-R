@@ -16,6 +16,19 @@ import Quejas from './pages/Quejas';
 import Foro from './pages/Foro';
 import { inicializarAnalitica, registrarVistaPagina } from './utils/analitica';
 
+const TITULOS_RUTA = {
+  '/': 'AmazeMe - Recomendador Inteligente de Regalos Personalizados',
+  '/cuestionario': 'Cuestionario de Regalos Personalizados | AmazeMe',
+  '/foro': 'Foro de Opiniones y Recomendaciones de Regalos | AmazeMe',
+  '/recompensas': 'Recompensas y Puntos Amazings | AmazeMe',
+  '/perfil': 'Mi Perfil | AmazeMe',
+  '/entrar': 'Iniciar Sesión | AmazeMe',
+  '/registrar': 'Crear Cuenta | AmazeMe',
+  '/privacidad': 'Política de Privacidad y Datos Personales | AmazeMe',
+  '/terminos': 'Términos y Condiciones de Uso | AmazeMe',
+  '/quejas': 'Buzón de Quejas y Sugerencias | AmazeMe'
+};
+
 export default function App() {
   const ubicacion = useLocation();
   const rutaNormalizada = ubicacion.pathname.toLowerCase();
@@ -26,9 +39,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    document.title = TITULOS_RUTA[rutaNormalizada] || TITULOS_RUTA['/'];
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     registrarVistaPagina(ubicacion.pathname + ubicacion.search);
-  }, [ubicacion.pathname, ubicacion.search]);
+  }, [ubicacion.pathname, ubicacion.search, rutaNormalizada]);
 
   return (
     <div className="d-flex flex-column min-vh-100">
