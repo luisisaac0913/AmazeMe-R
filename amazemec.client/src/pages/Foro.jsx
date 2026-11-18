@@ -662,6 +662,7 @@ export default function Foro() {
                     <img
                       src={imagenesPublicacion[0]}
                       alt={pub.titulo}
+                      loading="lazy"
                       className="img-fluid rounded-2"
                       style={{ maxHeight: '360px', objectFit: 'contain' }}
                     />
@@ -678,6 +679,7 @@ export default function Foro() {
                           <img
                             src={imgSrc}
                             alt={`${pub.titulo} ${indice + 1}`}
+                            loading="lazy"
                             className="img-fluid rounded-2 w-100"
                             style={{ height: '190px', objectFit: 'cover' }}
                           />

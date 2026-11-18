@@ -57,10 +57,7 @@ namespace AmazeMec.Server.Controllers
             try
             {
                 var consulta = _context.PublicacionesForo
-                    .Include(p => p.Usuario)
-                    .Include(p => p.Likes)
-                    .Include(p => p.Comentarios)
-                        .ThenInclude(c => c.Usuario)
+                    .AsNoTracking()
                     .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(categoria) && !categoria.Equals("Todas", StringComparison.OrdinalIgnoreCase))
@@ -78,19 +75,48 @@ namespace AmazeMec.Server.Controllers
                         (p.RegaloMencionado != null && p.RegaloMencionado.ToLower().Contains(termino)));
                 }
 
-                var lista = await consulta.ToListAsync();
-
-                IEnumerable<PublicacionForo> ordenada = orden == "populares"
-                    ? lista.OrderByDescending(p => p.Likes.Count).ThenByDescending(p => p.FechaCreacion)
-                    : lista.OrderByDescending(p => p.FechaCreacion);
-
-                int total = lista.Count;
+                int total = await consulta.CountAsync();
                 int totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tamanoSeguro));
-                var paginada = ordenada
-                    .Skip((paginaSegura - 1) * tamanoSeguro)
-                    .Take(tamanoSeguro);
 
-                var publicaciones = paginada.Select(p =>
+                var ordenada = orden == "populares"
+                    ? consulta.OrderByDescending(p => p.Likes.Count).ThenByDescending(p => p.FechaCreacion)
+                    : consulta.OrderByDescending(p => p.FechaCreacion);
+
+                var filas = await ordenada
+                    .Skip((paginaSegura - 1) * tamanoSeguro)
+                    .Take(tamanoSeguro)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.Titulo,
+                        p.Contenido,
+                        p.RegaloMencionado,
+                        p.ImagenUrl,
+                        p.Categoria,
+                        p.Calificacion,
+                        p.FechaCreacion,
+                        p.UsuarioId,
+                        AutorNombre = p.Usuario != null ? p.Usuario.Nombre : "Usuario",
+                        AutorFoto = p.Usuario != null ? p.Usuario.FotoPerfil : null,
+                        TotalLikes = p.Likes.Count,
+                        DioLike = usuarioActualId.HasValue && p.Likes.Any(l => l.UsuarioId == usuarioActualId.Value),
+                        TotalComentarios = p.Comentarios.Count,
+                        Comentarios = p.Comentarios
+                            .OrderBy(c => c.FechaCreacion)
+                            .Select(c => new ComentarioForoResponse
+                            {
+                                Id = c.Id,
+                                Contenido = c.Contenido,
+                                FechaCreacion = c.FechaCreacion,
+                                AutorNombre = c.Usuario != null ? c.Usuario.Nombre : "Usuario",
+                                AutorFoto = c.Usuario != null ? c.Usuario.FotoPerfil : null,
+                                EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
+                            })
+                            .ToList()
+                    })
+                    .ToListAsync();
+
+                var publicaciones = filas.Select(p =>
                 {
                     var imagenes = DeserializarImagenes(p.ImagenUrl);
                     return new PublicacionForoResponse
@@ -104,24 +130,13 @@ namespace AmazeMec.Server.Controllers
                         Categoria = p.Categoria,
                         Calificacion = p.Calificacion,
                         FechaCreacion = p.FechaCreacion,
-                        AutorNombre = p.Usuario?.Nombre ?? "Usuario",
-                        AutorFoto = p.Usuario?.FotoPerfil,
+                        AutorNombre = p.AutorNombre,
+                        AutorFoto = p.AutorFoto,
                         EsPropia = usuarioActualId.HasValue && p.UsuarioId == usuarioActualId.Value,
-                        TotalLikes = p.Likes.Count,
-                        DioLike = usuarioActualId.HasValue && p.Likes.Any(l => l.UsuarioId == usuarioActualId.Value),
-                        TotalComentarios = p.Comentarios.Count,
+                        TotalLikes = p.TotalLikes,
+                        DioLike = p.DioLike,
+                        TotalComentarios = p.TotalComentarios,
                         Comentarios = p.Comentarios
-                            .OrderBy(c => c.FechaCreacion)
-                            .Select(c => new ComentarioForoResponse
-                            {
-                                Id = c.Id,
-                                Contenido = c.Contenido,
-                                FechaCreacion = c.FechaCreacion,
-                                AutorNombre = c.Usuario?.Nombre ?? "Usuario",
-                                AutorFoto = c.Usuario?.FotoPerfil,
-                                EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
-                            })
-                            .ToList()
                     };
                 }).ToList();
 
@@ -151,11 +166,25 @@ namespace AmazeMec.Server.Controllers
             try
             {
                 var lista = await _context.PublicacionesForo
-                    .Include(p => p.Usuario)
-                    .Include(p => p.Likes)
-                    .Include(p => p.Comentarios)
+                    .AsNoTracking()
                     .Where(p => p.UsuarioId == usuarioId.Value)
                     .OrderByDescending(p => p.FechaCreacion)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.Titulo,
+                        p.Contenido,
+                        p.RegaloMencionado,
+                        p.ImagenUrl,
+                        p.Categoria,
+                        p.Calificacion,
+                        p.FechaCreacion,
+                        AutorNombre = p.Usuario != null ? p.Usuario.Nombre : "Usuario",
+                        AutorFoto = p.Usuario != null ? p.Usuario.FotoPerfil : null,
+                        TotalLikes = p.Likes.Count,
+                        DioLike = p.Likes.Any(l => l.UsuarioId == usuarioId.Value),
+                        TotalComentarios = p.Comentarios.Count
+                    })
                     .ToListAsync();
 
                 var resultado = lista.Select(p =>
@@ -170,14 +199,14 @@ namespace AmazeMec.Server.Controllers
                         ImagenUrl = imagenes.FirstOrDefault(),
                         Imagenes = imagenes,
                         Categoria = p.Categoria,
-                    Calificacion = p.Calificacion,
-                    FechaCreacion = p.FechaCreacion,
-                    AutorNombre = p.Usuario?.Nombre ?? "Usuario",
-                    AutorFoto = p.Usuario?.FotoPerfil,
-                    EsPropia = true,
-                    TotalLikes = p.Likes.Count,
-                    DioLike = p.Likes.Any(l => l.UsuarioId == usuarioId.Value),
-                    TotalComentarios = p.Comentarios.Count,
+                        Calificacion = p.Calificacion,
+                        FechaCreacion = p.FechaCreacion,
+                        AutorNombre = p.AutorNombre,
+                        AutorFoto = p.AutorFoto,
+                        EsPropia = true,
+                        TotalLikes = p.TotalLikes,
+                        DioLike = p.DioLike,
+                        TotalComentarios = p.TotalComentarios,
                     Comentarios = new List<ComentarioForoResponse>()
                     };
                 }).ToList();
