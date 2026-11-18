@@ -21,10 +21,27 @@ function PerfilDatosForm({ usuario, alActualizar }) {
     evento.preventDefault();
     establecerError(null);
     establecerExito(null);
+
+    if (!nombre.trim() || !email.trim()) {
+      establecerError('El nombre de usuario y el correo electrónico son obligatorios.');
+      return;
+    }
+
+    if (nombre.trim().length > 50) {
+      establecerError('El nombre de usuario no puede superar los 50 caracteres.');
+      return;
+    }
+
+    const regexCorreo = /^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook|yahoo|icloud)\.(com|es|com\.mx|net|org)$/i;
+    if (!regexCorreo.test(email.trim())) {
+      establecerError('El correo es inválido o el proveedor no es admitido (usa Gmail, Outlook, Hotmail, Yahoo o iCloud).');
+      return;
+    }
+
     establecerCargando(true);
 
     try {
-      await alActualizar(nombre, email);
+      await alActualizar(nombre.trim(), email.trim());
       establecerExito('Tus datos han sido actualizados con éxito.');
     } catch (err) {
       establecerError(err.message);

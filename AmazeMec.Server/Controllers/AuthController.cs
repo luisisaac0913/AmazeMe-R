@@ -254,11 +254,18 @@ namespace AmazeMec.Server.Controllers
                 return BadRequest(new { error = "El correo es inválido o no admitido." });
             }
 
-            bool duplicado = await _context.Usuario.AnyAsync(u =>
-                u.Id != userId && (u.Nombre.ToLower() == nuevoNombreLower || u.Email.ToLower() == nuevoEmail));
-            if (duplicado)
+            bool nombreOcupado = await _context.Usuario.AnyAsync(u =>
+                u.Id != userId && u.Nombre.ToLower() == nuevoNombreLower);
+            if (nombreOcupado)
             {
-                return Conflict(new { error = "El nombre de usuario o correo ya está en uso." });
+                return Conflict(new { error = "El nombre de usuario ya se encuentra en uso." });
+            }
+
+            bool correoOcupado = await _context.Usuario.AnyAsync(u =>
+                u.Id != userId && u.Email.ToLower() == nuevoEmail);
+            if (correoOcupado)
+            {
+                return Conflict(new { error = "El correo electrónico ya se encuentra en uso." });
             }
 
             usuario.Nombre = nuevoNombre;
