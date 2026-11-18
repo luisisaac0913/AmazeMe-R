@@ -808,75 +808,76 @@ export default function Cuestionario() {
                                     </div>
 
                                     <div className="row g-3">
-                                        {recomendaciones.map((producto, indice) => (
-                                            <div
-                                                key={producto.id}
-                                                className="col-12 col-md-6 tarjeta-recomendacion"
-                                                style={{ animationDelay: `${Math.min(indice * 45, 900)}ms` }}
-                                            >
-                                                <div className="card h-100 border rounded-4 p-3 bg-white shadow-sm d-flex flex-column justify-content-between">
-                                                    <div>
-                                                        <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                                            <div className="d-flex align-items-center gap-2">
+                                        {recomendaciones.map((producto, indice) => {
+                                            const estiloPuntuacion =
+                                                producto.calificacion >= 4.5
+                                                    ? { backgroundColor: '#1e8e3e', color: '#ffffff' }
+                                                    : producto.calificacion >= 3.5
+                                                      ? { backgroundColor: '#fbbc04', color: '#202124' }
+                                                      : producto.calificacion >= 2.5
+                                                        ? { backgroundColor: '#fa7b17', color: '#ffffff' }
+                                                        : { backgroundColor: '#d93025', color: '#ffffff' };
+
+                                            return (
+                                                <div
+                                                    key={producto.id}
+                                                    className="col-12 col-md-6 tarjeta-recomendacion"
+                                                    style={{ animationDelay: `${Math.min(indice * 45, 900)}ms` }}
+                                                >
+                                                    <div className="card h-100 border rounded-4 p-3 bg-white shadow-sm d-flex flex-column justify-content-between">
+                                                        <div>
+                                                            <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
                                                                 <div
-                                                                    className="user-avatar-circle flex-shrink-0"
-                                                                    style={{ width: '40px', height: '40px' }}
+                                                                    className="rounded-3 px-2 py-1 d-inline-flex align-items-center gap-1 fw-bold small"
+                                                                    style={estiloPuntuacion}
                                                                 >
-                                                                    <span className="material-symbols-outlined fs-5">
-                                                                        {producto.icono}
+                                                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                                                        star
                                                                     </span>
+                                                                    <span>{producto.calificacion}</span>
                                                                 </div>
-                                                                <div>
-                                                                    <span className="badge bg-light border text-secondary small">
-                                                                        {producto.categoria}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <span className="badge bg-success-subtle text-success">
-                                                                {producto.coincidencia}% match
-                                                            </span>
-                                                        </div>
-
-                                                        <h6 className="fw-bold text-dark mb-1">{producto.nombre}</h6>
-                                                        <p className="text-muted small mb-2">{producto.razon}</p>
-
-                                                        <div className="d-flex justify-content-between align-items-center small mb-3">
-                                                            <span className="fw-bold text-dark fs-6">
-                                                                ${producto.precio} MXN
-                                                            </span>
-                                                            <span className="text-muted d-inline-flex align-items-center gap-1">
-                                                                <span className="material-symbols-outlined text-success" style={{ fontSize: '16px' }}>
-                                                                    star
+                                                                <span className="badge bg-success text-white">
+                                                                    {producto.coincidencia}% match
                                                                 </span>
-                                                                <span>{producto.calificacion}</span>
-                                                                <span>• {producto.entrega}</span>
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                            </div>
 
-                                                    <div className="d-flex gap-2">
-                                                        <a
-                                                            href={producto.enlaceAmazon}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="btn btn-success btn-sm rounded-pill flex-grow-1 text-white d-inline-flex align-items-center justify-content-center gap-1"
-                                                        >
-                                                            <span>Ver opción</span>
-                                                            <span className="material-symbols-outlined fs-6">open_in_new</span>
-                                                        </a>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center justify-content-center gap-1"
-                                                            onClick={() => compartirEnForo(producto)}
-                                                            aria-label={`Compartir ${producto.nombre} en el foro`}
-                                                        >
-                                                            <span className="material-symbols-outlined fs-6">forum</span>
-                                                            <span>Foro</span>
-                                                        </button>
+                                                            <h6 className="fw-bold text-dark mb-1">{producto.nombreCorto}</h6>
+                                                            <p className="text-muted small mb-2">{producto.etiquetaCorta}</p>
+
+                                                            <div className="mb-3">
+                                                                <div className="fs-4 fw-bold text-success lh-sm">
+                                                                    ${producto.precio} <span className="fs-6 fw-semibold">MXN</span>
+                                                                </div>
+                                                                <small className="text-muted d-block mt-1">
+                                                                    {producto.entrega}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="d-flex gap-2">
+                                                            <a
+                                                                href={producto.enlaceAmazon}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="btn btn-success btn-sm rounded-pill flex-grow-1 text-white d-inline-flex align-items-center justify-content-center gap-1"
+                                                            >
+                                                                <span>Ver opción</span>
+                                                                <span className="material-symbols-outlined fs-6">open_in_new</span>
+                                                            </a>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center justify-content-center gap-1"
+                                                                onClick={() => compartirEnForo(producto)}
+                                                                aria-label={`Compartir ${producto.nombre} en el foro`}
+                                                            >
+                                                                <span className="material-symbols-outlined fs-6">forum</span>
+                                                                <span>Foro</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
