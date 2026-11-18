@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
-  const { register, subirFotoPerfil } = useAuth();
+  const { user, loading: cargandoSesion, register, subirFotoPerfil } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -102,6 +102,10 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  if (!cargandoSesion && user && !loading) {
+    return <Navigate to={returnUrl} replace />;
+  }
 
   return (
     <div className="container my-5">

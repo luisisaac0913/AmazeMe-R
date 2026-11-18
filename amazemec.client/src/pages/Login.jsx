@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { user, loading: cargandoSesion, login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -48,6 +48,10 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (!cargandoSesion && user && !loading && !puntosReclamadosMsg) {
+    return <Navigate to={returnUrl} replace />;
+  }
 
   return (
     <div className="container my-5">

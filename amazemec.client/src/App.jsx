@@ -18,7 +18,8 @@ import { inicializarAnalitica, registrarVistaPagina } from './utils/analitica';
 
 export default function App() {
   const ubicacion = useLocation();
-  const esRutaAuth = ubicacion.pathname === '/entrar' || ubicacion.pathname === '/registrar';
+  const rutaNormalizada = ubicacion.pathname.toLowerCase();
+  const esRutaAuth = rutaNormalizada === '/entrar' || rutaNormalizada === '/registrar';
 
   useEffect(() => {
     inicializarAnalitica();
