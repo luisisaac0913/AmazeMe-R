@@ -23,9 +23,12 @@ export default function Foro() {
   const [regaloMencionado, establecerRegaloMencionado] = useState(borradorInicial?.regaloMencionado || '');
   const [categoriaNueva, establecerCategoriaNueva] = useState(borradorInicial?.categoria || 'Regalo recibido');
   const [calificacion, establecerCalificacion] = useState(5);
-  const [imagenArchivo, establecerImagenArchivo] = useState(null);
-  const [vistaPreviaImagen, establecerVistaPreviaImagen] = useState(null);
+  const [imagenesArchivos, establecerImagenesArchivos] = useState([]);
+  const [vistasPreviasImagenes, establecerVistasPreviasImagenes] = useState([]);
   const [enviando, establecerEnviando] = useState(false);
+  const [paginaActual, establecerPaginaActual] = useState(1);
+  const [hayMas, establecerHayMas] = useState(false);
+  const [cargandoMas, establecerCargandoMas] = useState(false);
 
   const [comentariosAbiertos, establecerComentariosAbiertos] = useState({});
   const [textoComentarios, establecerTextoComentarios] = useState({});
@@ -34,14 +37,26 @@ export default function Foro() {
   const [likeEnProcesoId, establecerLikeEnProcesoId] = useState(null);
   const [eliminandoId, establecerEliminandoId] = useState(null);
 
-  const cargarPublicaciones = async (cat = categoriaActiva, ord = orden, busq = busqueda) => {
-    establecerCargando(true);
+  const cargarPublicaciones = async (
+    cat = categoriaActiva,
+    ord = orden,
+    busq = busqueda,
+    paginaSolicitada = 1,
+    acumular = false
+  ) => {
+    if (acumular) {
+      establecerCargandoMas(true);
+    } else {
+      establecerCargando(true);
+    }
     establecerError(null);
     try {
       const parametros = new URLSearchParams();
       if (cat && cat !== 'Todas') parametros.set('categoria', cat);
       if (ord) parametros.set('orden', ord);
       if (busq.trim()) parametros.set('busqueda', busq.trim());
+      parametros.set('pagina', String(paginaSolicitada));
+      parametros.set('tamanoPagina', '10');
 
       const respuesta = await fetch(`/api/foro?${parametros.toString()}`, {
         credentials: 'include'
@@ -50,51 +65,75 @@ export default function Foro() {
       if (!respuesta.ok) {
         throw new Error(datos?.error || 'No se pudieron cargar las publicaciones del foro.');
       }
-      establecerPublicaciones(Array.isArray(datos) ? datos : []);
+      const lista = Array.isArray(datos)
+        ? datos
+        : Array.isArray(datos?.publicaciones)
+          ? datos.publicaciones
+          : [];
+
+      establecerPublicaciones((previas) => (acumular ? [...previas, ...lista] : lista));
+      establecerPaginaActual(datos?.pagina || paginaSolicitada);
+      establecerHayMas(Boolean(datos?.hayMas));
     } catch (err) {
       establecerError(err.message);
     } finally {
       establecerCargando(false);
+      establecerCargandoMas(false);
     }
   };
 
   useEffect(() => {
-    cargarPublicaciones(categoriaActiva, orden, busqueda);
+    cargarPublicaciones(categoriaActiva, orden, busqueda, 1, false);
   }, [categoriaActiva, orden]);
 
   const manejarBusqueda = (evento) => {
     evento.preventDefault();
-    cargarPublicaciones(categoriaActiva, orden, busqueda);
+    cargarPublicaciones(categoriaActiva, orden, busqueda, 1, false);
   };
 
-  const manejarSeleccionImagen = (evento) => {
+  const leerArchivoComoDataUrl = (archivo) =>
+    new Promise((resolver, rechazar) => {
+      const lector = new FileReader();
+      lector.onload = () => resolver(lector.result);
+      lector.onerror = () => rechazar(new Error('No se pudo leer una de las imágenes.'));
+      lector.readAsDataURL(archivo);
+    });
+
+  const manejarSeleccionImagenes = async (evento) => {
     establecerError(null);
-    const archivo = evento.target.files?.[0];
-    if (!archivo) {
-      establecerImagenArchivo(null);
-      establecerVistaPreviaImagen(null);
-      return;
-    }
+    const seleccionados = Array.from(evento.target.files || []);
+    evento.target.value = '';
+    if (seleccionados.length === 0) return;
 
     const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!tiposPermitidos.includes(archivo.type)) {
-      establecerError('Formato no admitido. Usa JPG, PNG o WEBP.');
-      establecerImagenArchivo(null);
-      establecerVistaPreviaImagen(null);
-      return;
+    const combinados = [...imagenesArchivos];
+    const nuevasVistas = [...vistasPreviasImagenes];
+
+    for (const archivo of seleccionados) {
+      if (combinados.length >= 4) {
+        establecerError('Puedes adjuntar máximo 4 fotos por publicación.');
+        break;
+      }
+      if (!tiposPermitidos.includes(archivo.type)) {
+        establecerError('Formato no admitido. Usa JPG, PNG o WEBP.');
+        continue;
+      }
+      if (archivo.size > 3 * 1024 * 1024) {
+        establecerError('Cada imagen debe pesar máximo 3 MB.');
+        continue;
+      }
+      const vista = await leerArchivoComoDataUrl(archivo);
+      combinados.push(archivo);
+      nuevasVistas.push(vista);
     }
 
-    if (archivo.size > 3 * 1024 * 1024) {
-      establecerError('La imagen no debe superar los 3 MB.');
-      establecerImagenArchivo(null);
-      establecerVistaPreviaImagen(null);
-      return;
-    }
+    establecerImagenesArchivos(combinados);
+    establecerVistasPreviasImagenes(nuevasVistas);
+  };
 
-    establecerImagenArchivo(archivo);
-    const lector = new FileReader();
-    lector.onload = () => establecerVistaPreviaImagen(lector.result);
-    lector.readAsDataURL(archivo);
+  const quitarImagen = (indice) => {
+    establecerImagenesArchivos((previas) => previas.filter((_, i) => i !== indice));
+    establecerVistasPreviasImagenes((previas) => previas.filter((_, i) => i !== indice));
   };
 
   const manejarCrearPublicacion = async (evento) => {
@@ -118,7 +157,7 @@ export default function Foro() {
       if (regaloMencionado.trim()) formulario.append('regaloMencionado', regaloMencionado.trim());
       formulario.append('categoria', categoriaNueva);
       formulario.append('calificacion', String(Number(calificacion)));
-      if (imagenArchivo) formulario.append('imagen', imagenArchivo);
+      imagenesArchivos.forEach((archivo) => formulario.append('imagenes', archivo));
 
       const respuesta = await fetch('/api/foro', {
         method: 'POST',
@@ -140,8 +179,8 @@ export default function Foro() {
       establecerContenido('');
       establecerRegaloMencionado('');
       establecerCalificacion(5);
-      establecerImagenArchivo(null);
-      establecerVistaPreviaImagen(null);
+      establecerImagenesArchivos([]);
+      establecerVistasPreviasImagenes([]);
       establecerMostrarFormulario(false);
     } catch (err) {
       establecerError(err.message);
@@ -424,27 +463,35 @@ export default function Foro() {
                 id="foroImagen"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
+                multiple
                 className="form-control"
-                onChange={manejarSeleccionImagen}
+                onChange={manejarSeleccionImagenes}
+                disabled={imagenesArchivos.length >= 4}
               />
-              {vistaPreviaImagen && (
-                <div className="mt-3 position-relative d-inline-block">
-                  <img
-                    src={vistaPreviaImagen}
-                    alt="Vista previa"
-                    className="img-fluid rounded-3 border"
-                    style={{ maxHeight: '220px', objectFit: 'contain' }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-danger rounded-pill mt-2 d-block"
-                    onClick={() => {
-                      establecerImagenArchivo(null);
-                      establecerVistaPreviaImagen(null);
-                    }}
-                  >
-                    Quitar imagen
-                  </button>
+              <small className="text-muted d-block mt-1">
+                Puedes subir hasta 4 fotos ({imagenesArchivos.length}/4 seleccionadas, máx. 3 MB cada una).
+              </small>
+              {vistasPreviasImagenes.length > 0 && (
+                <div className="row g-2 mt-2">
+                  {vistasPreviasImagenes.map((vista, indice) => (
+                    <div key={indice} className="col-6 col-sm-3">
+                      <div className="position-relative border rounded-3 p-1 bg-white h-100 d-flex flex-column align-items-center justify-content-between">
+                        <img
+                          src={vista}
+                          alt={`Vista previa ${indice + 1}`}
+                          className="img-fluid rounded-2 w-100"
+                          style={{ height: '120px', objectFit: 'cover' }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger rounded-pill mt-2 w-100"
+                          onClick={() => quitarImagen(indice)}
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -470,40 +517,41 @@ export default function Foro() {
       )}
 
       <div className="card border rounded-4 p-3 p-md-4 mb-4 bg-white shadow-sm">
-        <div className="row g-3 align-items-center">
-          <div className="col-lg-6">
-            <div className="d-flex flex-wrap gap-2">
-              {CATEGORIAS_FORO.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className={`btn btn-sm rounded-pill px-3 ${
-                    categoriaActiva === cat ? 'btn-success text-white' : 'btn-outline-secondary'
-                  }`}
-                  onClick={() => establecerCategoriaActiva(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+        <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-wrap gap-2">
+            {CATEGORIAS_FORO.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                className={`btn btn-sm rounded-pill px-3 text-nowrap ${
+                  categoriaActiva === cat ? 'btn-success text-white' : 'btn-outline-secondary'
+                }`}
+                onClick={() => establecerCategoriaActiva(cat)}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
-          <div className="col-lg-6">
-            <div className="d-flex gap-2 flex-column flex-sm-row">
-              <form className="d-flex flex-grow-1 gap-2" onSubmit={manejarBusqueda}>
+
+          <div className="row g-2 align-items-center">
+            <div className="col-12 col-md-8 col-lg-9">
+              <form className="d-flex gap-2" onSubmit={manejarBusqueda}>
                 <input
                   type="search"
-                  className="form-control form-control-sm"
+                  className="form-control"
                   placeholder="Buscar regalo o tema..."
                   value={busqueda}
                   onChange={(evento) => establecerBusqueda(evento.target.value)}
                 />
-                <button type="submit" className="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <button type="submit" className="btn btn-outline-secondary rounded-pill px-4 text-nowrap">
                   Buscar
                 </button>
               </form>
+            </div>
+            <div className="col-12 col-md-4 col-lg-3">
               <select
                 aria-label="Ordenar publicaciones"
-                className="form-select form-select-sm flex-sm-grow-0"
+                className="form-select"
                 value={orden}
                 onChange={(evento) => establecerOrden(evento.target.value)}
               >
@@ -533,6 +581,11 @@ export default function Foro() {
         <div className="d-flex flex-column gap-3">
           {publicaciones.map((pub) => {
             const comentariosVisibles = Boolean(comentariosAbiertos[pub.id]);
+            const imagenesPublicacion = Array.isArray(pub.imagenes) && pub.imagenes.length > 0
+              ? pub.imagenes
+              : pub.imagenUrl
+                ? [pub.imagenUrl]
+                : [];
             return (
               <article key={pub.id} className="card border rounded-4 p-3 p-md-4 bg-white shadow-sm">
                 <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-start gap-2 mb-3">
@@ -604,14 +657,33 @@ export default function Foro() {
                   {pub.contenido}
                 </p>
 
-                {pub.imagenUrl && (
+                {imagenesPublicacion.length === 1 && (
                   <div className="mb-3 bg-light rounded-3 border text-center overflow-hidden p-2">
                     <img
-                      src={pub.imagenUrl}
+                      src={imagenesPublicacion[0]}
                       alt={pub.titulo}
                       className="img-fluid rounded-2"
                       style={{ maxHeight: '360px', objectFit: 'contain' }}
                     />
+                  </div>
+                )}
+                {imagenesPublicacion.length > 1 && (
+                  <div className="row g-2 mb-3">
+                    {imagenesPublicacion.map((imgSrc, indice) => (
+                      <div
+                        key={indice}
+                        className={imagenesPublicacion.length === 2 ? 'col-6' : 'col-6 col-md-3'}
+                      >
+                        <div className="bg-light rounded-3 border overflow-hidden p-1 h-100 d-flex align-items-center justify-content-center">
+                          <img
+                            src={imgSrc}
+                            alt={`${pub.titulo} ${indice + 1}`}
+                            className="img-fluid rounded-2 w-100"
+                            style={{ height: '190px', objectFit: 'cover' }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -719,6 +791,18 @@ export default function Foro() {
               </article>
             );
           })}
+          {hayMas && (
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                className="btn btn-outline-success rounded-pill px-4"
+                disabled={cargandoMas}
+                onClick={() => cargarPublicaciones(categoriaActiva, orden, busqueda, paginaActual + 1, true)}
+              >
+                {cargandoMas ? 'Cargando más...' : 'Cargar más opiniones'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

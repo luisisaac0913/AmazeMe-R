@@ -31,10 +31,10 @@ export default function CookieConsent() {
 
   return (
     <div id="cookieConsentPopup" className="position-fixed bottom-0 start-0 end-0 p-3" style={{ zIndex: 1080 }}>
-      <div className="container" style={{ maxWidth: '680px' }}>
-        <div className="card border rounded-4 p-4 bg-white shadow-lg">
-          <div className="row align-items-center gy-3">
-            <div className="col-12 col-md-8 text-start">
+      <div className="container" style={{ maxWidth: '820px' }}>
+        <div className="card border rounded-4 p-3 p-md-4 bg-white shadow-lg">
+          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+            <div className="flex-grow-1 text-start" style={{ minWidth: 0 }}>
               <div className="d-flex align-items-center gap-2 mb-2">
                 <span className="material-symbols-outlined text-secondary fs-5">cookie</span>
                 <h6 className="fw-bold text-dark mb-0">
@@ -49,17 +49,17 @@ export default function CookieConsent() {
                 .
               </p>
             </div>
-            <div className="col-12 col-md-4 d-flex justify-content-md-end gap-2">
+            <div className="d-flex flex-wrap flex-md-nowrap align-items-center gap-2 flex-shrink-0">
               <button
                 type="button"
-                className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium"
+                className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium text-nowrap"
                 onClick={() => handleDecision('essential')}
               >
                 Solo esenciales
               </button>
               <button
                 type="button"
-                className="btn btn-success btn-sm rounded-pill px-4 fw-medium text-white shadow-sm"
+                className="btn btn-success btn-sm rounded-pill px-4 fw-medium text-white shadow-sm text-nowrap"
                 onClick={() => handleDecision('all')}
               >
                 Aceptar todas

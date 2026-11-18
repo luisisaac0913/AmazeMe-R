@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace AmazeMec.Server.Controllers
 {
@@ -45,9 +46,13 @@ namespace AmazeMec.Server.Controllers
         public async Task<IActionResult> ObtenerPublicaciones(
             [FromQuery] string? categoria = null,
             [FromQuery] string? orden = "recientes",
-            [FromQuery] string? busqueda = null)
+            [FromQuery] string? busqueda = null,
+            [FromQuery] int pagina = 1,
+            [FromQuery] int tamanoPagina = 10)
         {
             int? usuarioActualId = ObtenerUsuarioId();
+            int paginaSegura = Math.Max(1, pagina);
+            int tamanoSeguro = Math.Clamp(tamanoPagina, 1, 30);
 
             try
             {
@@ -79,37 +84,55 @@ namespace AmazeMec.Server.Controllers
                     ? lista.OrderByDescending(p => p.Likes.Count).ThenByDescending(p => p.FechaCreacion)
                     : lista.OrderByDescending(p => p.FechaCreacion);
 
-                var resultado = ordenada.Select(p => new PublicacionForoResponse
+                int total = lista.Count;
+                int totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tamanoSeguro));
+                var paginada = ordenada
+                    .Skip((paginaSegura - 1) * tamanoSeguro)
+                    .Take(tamanoSeguro);
+
+                var publicaciones = paginada.Select(p =>
                 {
-                    Id = p.Id,
-                    Titulo = p.Titulo,
-                    Contenido = p.Contenido,
-                    RegaloMencionado = p.RegaloMencionado,
-                    ImagenUrl = p.ImagenUrl,
-                    Categoria = p.Categoria,
-                    Calificacion = p.Calificacion,
-                    FechaCreacion = p.FechaCreacion,
-                    AutorNombre = p.Usuario?.Nombre ?? "Usuario",
-                    AutorFoto = p.Usuario?.FotoPerfil,
-                    EsPropia = usuarioActualId.HasValue && p.UsuarioId == usuarioActualId.Value,
-                    TotalLikes = p.Likes.Count,
-                    DioLike = usuarioActualId.HasValue && p.Likes.Any(l => l.UsuarioId == usuarioActualId.Value),
-                    TotalComentarios = p.Comentarios.Count,
-                    Comentarios = p.Comentarios
-                        .OrderBy(c => c.FechaCreacion)
-                        .Select(c => new ComentarioForoResponse
-                        {
-                            Id = c.Id,
-                            Contenido = c.Contenido,
-                            FechaCreacion = c.FechaCreacion,
-                            AutorNombre = c.Usuario?.Nombre ?? "Usuario",
-                            AutorFoto = c.Usuario?.FotoPerfil,
-                            EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
-                        })
-                        .ToList()
+                    var imagenes = DeserializarImagenes(p.ImagenUrl);
+                    return new PublicacionForoResponse
+                    {
+                        Id = p.Id,
+                        Titulo = p.Titulo,
+                        Contenido = p.Contenido,
+                        RegaloMencionado = p.RegaloMencionado,
+                        ImagenUrl = imagenes.FirstOrDefault(),
+                        Imagenes = imagenes,
+                        Categoria = p.Categoria,
+                        Calificacion = p.Calificacion,
+                        FechaCreacion = p.FechaCreacion,
+                        AutorNombre = p.Usuario?.Nombre ?? "Usuario",
+                        AutorFoto = p.Usuario?.FotoPerfil,
+                        EsPropia = usuarioActualId.HasValue && p.UsuarioId == usuarioActualId.Value,
+                        TotalLikes = p.Likes.Count,
+                        DioLike = usuarioActualId.HasValue && p.Likes.Any(l => l.UsuarioId == usuarioActualId.Value),
+                        TotalComentarios = p.Comentarios.Count,
+                        Comentarios = p.Comentarios
+                            .OrderBy(c => c.FechaCreacion)
+                            .Select(c => new ComentarioForoResponse
+                            {
+                                Id = c.Id,
+                                Contenido = c.Contenido,
+                                FechaCreacion = c.FechaCreacion,
+                                AutorNombre = c.Usuario?.Nombre ?? "Usuario",
+                                AutorFoto = c.Usuario?.FotoPerfil,
+                                EsPropio = usuarioActualId.HasValue && c.UsuarioId == usuarioActualId.Value
+                            })
+                            .ToList()
+                    };
                 }).ToList();
 
-                return Ok(resultado);
+                return Ok(new
+                {
+                    publicaciones,
+                    total,
+                    pagina = paginaSegura,
+                    totalPaginas,
+                    hayMas = paginaSegura < totalPaginas
+                });
             }
             catch (Exception ex)
             {
@@ -135,14 +158,18 @@ namespace AmazeMec.Server.Controllers
                     .OrderByDescending(p => p.FechaCreacion)
                     .ToListAsync();
 
-                var resultado = lista.Select(p => new PublicacionForoResponse
+                var resultado = lista.Select(p =>
                 {
-                    Id = p.Id,
-                    Titulo = p.Titulo,
-                    Contenido = p.Contenido,
-                    RegaloMencionado = p.RegaloMencionado,
-                    ImagenUrl = p.ImagenUrl,
-                    Categoria = p.Categoria,
+                    var imagenes = DeserializarImagenes(p.ImagenUrl);
+                    return new PublicacionForoResponse
+                    {
+                        Id = p.Id,
+                        Titulo = p.Titulo,
+                        Contenido = p.Contenido,
+                        RegaloMencionado = p.RegaloMencionado,
+                        ImagenUrl = imagenes.FirstOrDefault(),
+                        Imagenes = imagenes,
+                        Categoria = p.Categoria,
                     Calificacion = p.Calificacion,
                     FechaCreacion = p.FechaCreacion,
                     AutorNombre = p.Usuario?.Nombre ?? "Usuario",
@@ -152,6 +179,7 @@ namespace AmazeMec.Server.Controllers
                     DioLike = p.Likes.Any(l => l.UsuarioId == usuarioId.Value),
                     TotalComentarios = p.Comentarios.Count,
                     Comentarios = new List<ComentarioForoResponse>()
+                    };
                 }).ToList();
 
                 return Ok(resultado);
@@ -183,15 +211,25 @@ namespace AmazeMec.Server.Controllers
                 return BadRequest(new { error = "El título y el contenido son obligatorios." });
             }
 
-            string? imagenDataUrl = null;
-            if (request.Imagen != null && request.Imagen.Length > 0)
+            var archivosImagen = new List<IFormFile>();
+            if (request.Imagenes != null && request.Imagenes.Count > 0)
+            {
+                archivosImagen.AddRange(request.Imagenes.Where(a => a != null && a.Length > 0));
+            }
+            else if (request.Imagen != null && request.Imagen.Length > 0)
+            {
+                archivosImagen.Add(request.Imagen);
+            }
+
+            if (archivosImagen.Count > 4)
+            {
+                return BadRequest(new { error = "Puedes adjuntar máximo 4 imágenes por publicación." });
+            }
+
+            var imagenesDataUrl = new List<string>();
+            if (archivosImagen.Count > 0)
             {
                 const long tamanoMaximo = 3 * 1024 * 1024;
-                if (request.Imagen.Length > tamanoMaximo)
-                {
-                    return BadRequest(new { error = "La imagen no debe superar los 3 MB." });
-                }
-
                 var tiposPermitidos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
                     "image/jpeg",
@@ -199,22 +237,37 @@ namespace AmazeMec.Server.Controllers
                     "image/webp"
                 };
 
-                if (!tiposPermitidos.Contains(request.Imagen.ContentType))
+                foreach (var archivo in archivosImagen)
                 {
-                    return BadRequest(new { error = "Formato no admitido. Usa JPG, PNG o WEBP." });
+                    if (archivo.Length > tamanoMaximo)
+                    {
+                        return BadRequest(new { error = "Cada imagen no debe superar los 3 MB." });
+                    }
+
+                    if (!tiposPermitidos.Contains(archivo.ContentType))
+                    {
+                        return BadRequest(new { error = "Formato no admitido. Usa JPG, PNG o WEBP." });
+                    }
+
+                    using var memoria = new MemoryStream();
+                    await archivo.CopyToAsync(memoria);
+                    byte[] bytes = memoria.ToArray();
+
+                    if (!EsImagenValida(bytes))
+                    {
+                        return BadRequest(new { error = "Uno de los archivos no corresponde a una imagen JPG, PNG o WEBP válida." });
+                    }
+
+                    imagenesDataUrl.Add($"data:{archivo.ContentType};base64,{Convert.ToBase64String(bytes)}");
                 }
-
-                using var memoria = new MemoryStream();
-                await request.Imagen.CopyToAsync(memoria);
-                byte[] bytes = memoria.ToArray();
-
-                if (!EsImagenValida(bytes))
-                {
-                    return BadRequest(new { error = "El archivo no corresponde a una imagen JPG, PNG o WEBP válida." });
-                }
-
-                imagenDataUrl = $"data:{request.Imagen.ContentType};base64,{Convert.ToBase64String(bytes)}";
             }
+
+            string? imagenSerializada = imagenesDataUrl.Count switch
+            {
+                0 => null,
+                1 => imagenesDataUrl[0],
+                _ => JsonSerializer.Serialize(imagenesDataUrl)
+            };
 
             string categoriaFinal = CategoriasValidas.Contains(request.Categoria?.Trim() ?? "")
                 ? request.Categoria!.Trim()
@@ -225,7 +278,7 @@ namespace AmazeMec.Server.Controllers
                 Titulo = tituloLimpio,
                 Contenido = contenidoLimpio,
                 RegaloMencionado = string.IsNullOrWhiteSpace(request.RegaloMencionado) ? null : request.RegaloMencionado.Trim(),
-                ImagenUrl = imagenDataUrl,
+                ImagenUrl = imagenSerializada,
                 Categoria = categoriaFinal,
                 Calificacion = Math.Clamp(request.Calificacion, 1, 5),
                 FechaCreacion = DateTime.UtcNow,
@@ -243,7 +296,8 @@ namespace AmazeMec.Server.Controllers
                 Titulo = publicacion.Titulo,
                 Contenido = publicacion.Contenido,
                 RegaloMencionado = publicacion.RegaloMencionado,
-                ImagenUrl = publicacion.ImagenUrl,
+                ImagenUrl = imagenesDataUrl.FirstOrDefault(),
+                Imagenes = imagenesDataUrl,
                 Categoria = publicacion.Categoria,
                 Calificacion = publicacion.Calificacion,
                 FechaCreacion = publicacion.FechaCreacion,
@@ -397,6 +451,23 @@ namespace AmazeMec.Server.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Comentario eliminado." });
+        }
+
+        private static List<string> DeserializarImagenes(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor)) return new List<string>();
+            if (valor.TrimStart().StartsWith('['))
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize<List<string>>(valor) ?? new List<string>();
+                }
+                catch
+                {
+                    return new List<string>();
+                }
+            }
+            return new List<string> { valor };
         }
 
         private static bool EsImagenValida(byte[] bytes)

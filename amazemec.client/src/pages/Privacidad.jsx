@@ -97,6 +97,15 @@ export default function Privacidad() {
                 <li>
                   <strong>Actividad de Fidelidad:</strong> Registro de compras vinculadas a tu cuenta y balance acumulado de puntos <em>Amazings</em> (incluyendo el límite de 1 Amazing diario por encuesta gratuita y el 5% en Amazings sobre compras confirmadas).
                 </li>
+                <li>
+                  <strong>Foto de Perfil (Opcional):</strong> Imagen JPG, PNG o WEBP de hasta 2 MB que subes voluntariamente desde tu Perfil, validada por cabecera binaria para evitar archivos maliciosos.
+                </li>
+                <li>
+                  <strong>Participación en el Foro Comunitario:</strong> Título, categoría, texto, calificación, comentarios, reacciones y hasta 4 fotografías opcionales por publicación (JPG, PNG o WEBP, máx. 3 MB cada una) que compartes de forma pública; puedes eliminarlas en cualquier momento desde el Foro o tu Perfil.
+                </li>
+                <li>
+                  <strong>Buzón de Quejas y Sugerencias:</strong> Los mensajes enviados en la sección <Link to="/quejas" className="text-dark fw-medium">/quejas</Link> se transmiten mediante el servicio <strong>Formspree</strong> exclusivamente para dar seguimiento a reportes, soporte o solicitudes de derechos ARCO.
+                </li>
               </ul>
             </section>
 

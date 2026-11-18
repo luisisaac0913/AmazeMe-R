@@ -193,7 +193,13 @@ export default function Cuestionario() {
     };
 
     return (
-        <div className="container mt-4 mb-5" style={{ maxWidth: '680px' }}>
+        <div
+            className="container mt-4 mb-5"
+            style={{
+                maxWidth: step === 'pRecomendaciones' && !loading && !error ? '1140px' : '680px',
+                transition: 'max-width 0.3s ease'
+            }}
+        >
             {/* Progress Header */}
             <div className="mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -821,12 +827,12 @@ export default function Cuestionario() {
                                             return (
                                                 <div
                                                     key={producto.id}
-                                                    className="col-12 col-md-6 tarjeta-recomendacion"
+                                                    className="col-12 col-md-6 col-xl-4 tarjeta-recomendacion"
                                                     style={{ animationDelay: `${Math.min(indice * 45, 900)}ms` }}
                                                 >
                                                     <div className="card h-100 border rounded-4 p-3 bg-white shadow-sm d-flex flex-column justify-content-between">
                                                         <div>
-                                                            <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                                            <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
                                                                 <div
                                                                     className="rounded-3 px-2 py-1 d-inline-flex align-items-center gap-1 fw-bold small"
                                                                     style={estiloPuntuacion}
@@ -839,6 +845,19 @@ export default function Cuestionario() {
                                                                 <span className="badge bg-success text-white">
                                                                     {producto.coincidencia}% match
                                                                 </span>
+                                                            </div>
+
+                                                            <div className="bg-light rounded-3 border overflow-hidden mb-3 d-flex align-items-center justify-content-center p-2" style={{ height: '150px' }}>
+                                                                <img
+                                                                    src={producto.imagen}
+                                                                    alt={producto.nombre}
+                                                                    className="w-100 h-100"
+                                                                    style={{ objectFit: 'contain' }}
+                                                                    onError={(evento) => {
+                                                                        evento.currentTarget.onerror = null;
+                                                                        evento.currentTarget.src = producto.imagenRespaldo;
+                                                                    }}
+                                                                />
                                                             </div>
 
                                                             <h6 className="fw-bold text-dark mb-1">{producto.nombreCorto}</h6>
@@ -859,14 +878,14 @@ export default function Cuestionario() {
                                                                 href={producto.enlaceAmazon}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="btn btn-success btn-sm rounded-pill flex-grow-1 text-white d-inline-flex align-items-center justify-content-center gap-1"
+                                                                className="btn btn-success btn-sm rounded-pill flex-grow-1 text-white text-nowrap d-inline-flex align-items-center justify-content-center gap-1"
                                                             >
                                                                 <span>Ver opción</span>
                                                                 <span className="material-symbols-outlined fs-6">open_in_new</span>
                                                             </a>
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center justify-content-center gap-1"
+                                                                className="btn btn-outline-success btn-sm rounded-pill px-3 text-nowrap d-inline-flex align-items-center justify-content-center gap-1"
                                                                 onClick={() => compartirEnForo(producto)}
                                                                 aria-label={`Compartir ${producto.nombre} en el foro`}
                                                             >

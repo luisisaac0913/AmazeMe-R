@@ -589,14 +589,38 @@ function MisOpinionesCard() {
                 <p className="small text-dark fw-medium mb-1">Regalo: {opinion.regaloMencionado}</p>
               )}
               <p className="small text-muted mb-2">{opinion.contenido}</p>
-              {opinion.imagenUrl && (
-                <img
-                  src={opinion.imagenUrl}
-                  alt={opinion.titulo}
-                  className="img-fluid rounded-3 border"
-                  style={{ maxHeight: '160px', objectFit: 'contain' }}
-                />
-              )}
+              {(() => {
+                const imagenes = Array.isArray(opinion.imagenes) && opinion.imagenes.length > 0
+                  ? opinion.imagenes
+                  : opinion.imagenUrl
+                    ? [opinion.imagenUrl]
+                    : [];
+                if (imagenes.length === 0) return null;
+                if (imagenes.length === 1) {
+                  return (
+                    <img
+                      src={imagenes[0]}
+                      alt={opinion.titulo}
+                      className="img-fluid rounded-3 border"
+                      style={{ maxHeight: '160px', objectFit: 'contain' }}
+                    />
+                  );
+                }
+                return (
+                  <div className="row g-2">
+                    {imagenes.map((imgSrc, indice) => (
+                      <div key={indice} className="col-6 col-sm-3">
+                        <img
+                          src={imgSrc}
+                          alt={`${opinion.titulo} ${indice + 1}`}
+                          className="img-fluid rounded-3 border w-100"
+                          style={{ height: '100px', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>

@@ -22,6 +22,7 @@ namespace AmazeMec.Server.DTOs
         public int Calificacion { get; set; } = 5;
 
         public IFormFile? Imagen { get; set; }
+        public List<IFormFile>? Imagenes { get; set; }
     }
 
     public class CrearComentarioForoRequest
@@ -48,6 +49,7 @@ namespace AmazeMec.Server.DTOs
         public string Contenido { get; set; } = string.Empty;
         public string? RegaloMencionado { get; set; }
         public string? ImagenUrl { get; set; }
+        public List<string> Imagenes { get; set; } = new();
         public string Categoria { get; set; } = string.Empty;
         public int Calificacion { get; set; }
         public DateTime FechaCreacion { get; set; }
