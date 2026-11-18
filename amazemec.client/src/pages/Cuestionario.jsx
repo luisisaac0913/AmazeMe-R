@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { generarRecomendaciones } from '../utils/recomendaciones';
+
+const MENSAJES_ANALISIS = [
+    'Analizando personalidad, gustos y ocasión...',
+    'Filtrando opciones ajustadas a tu presupuesto...',
+    'Calculando tiempos de entrega disponibles...',
+    'Seleccionando las mejores recomendaciones para ti...'
+];
 
 export default function Cuestionario() {
     const { user } = useAuth();
@@ -8,6 +16,9 @@ export default function Cuestionario() {
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [indiceMensaje, establecerIndiceMensaje] = useState(0);
+    const [progresoAnalisis, establecerProgresoAnalisis] = useState(15);
+    const [recomendaciones, establecerRecomendaciones] = useState([]);
     const [error, setError] = useState(null);
     const [resultado, setResultado] = useState(null);
     const [mostrarModal, setMostrarModal] = useState(false);
@@ -60,10 +71,12 @@ export default function Cuestionario() {
         }));
     };
 
-    const compartirEnForo = () => {
+    const compartirEnForo = (productoEspecifico = null) => {
         const ocasionTexto = formData.ocasion?.trim() || 'Ocasión especial';
         const lineasResultados = [
-            '¡Hola comunidad! Acabo de completar el cuestionario de AmazeMe con estos resultados y me gustaría conocer sus opiniones o ideas:',
+            productoEspecifico
+                ? `¡Hola comunidad! AmazeMe me recomendó "${productoEspecifico.nombre}" ($${productoEspecifico.precio} MXN) tras completar el cuestionario y quiero saber qué opinan:`
+                : '¡Hola comunidad! Acabo de completar el cuestionario de AmazeMe y estas fueron algunas de mis recomendaciones principales:',
             '',
             `• Relación: ${formData.relacion}`,
             `• Edad aproximada: ${formData.edad} años`,
@@ -81,14 +94,28 @@ export default function Cuestionario() {
             lineasResultados.push(`• Evitar: ${formData.objetoNoquerido.trim()}`);
         }
 
-        lineasResultados.push('', '¿Qué regalo me recomendarían con este perfil?');
+        if (productoEspecifico) {
+            lineasResultados.push(
+                '',
+                `Producto recomendado: ${productoEspecifico.nombre} (${productoEspecifico.coincidencia}% de coincidencia • ${productoEspecifico.razon}).`
+            );
+        } else if (recomendaciones.length > 0) {
+            lineasResultados.push('', 'Top recomendaciones sugeridas:');
+            recomendaciones.slice(0, 5).forEach((item, indice) => {
+                lineasResultados.push(`${indice + 1}. ${item.nombre} — $${item.precio} MXN (${item.coincidencia}% match)`);
+            });
+        }
+
+        lineasResultados.push('', '¿Qué opinan de estas opciones o cuál elegirían ustedes?');
 
         navigate('/foro', {
             state: {
                 borradorForo: {
-                    titulo: `Ideas de regalo para ${formData.relacion} (${ocasionTexto})`,
+                    titulo: productoEspecifico
+                        ? `¿Qué opinan de "${productoEspecifico.nombre}" para ${formData.relacion}?`
+                        : `Mis recomendaciones para ${formData.relacion} (${ocasionTexto})`,
                     categoria: 'Recomendación',
-                    regaloMencionado: formData.objetoQuerido?.trim() || '',
+                    regaloMencionado: productoEspecifico?.nombre || formData.objetoQuerido?.trim() || '',
                     contenido: lineasResultados.join('\n')
                 }
             }
@@ -101,24 +128,36 @@ export default function Cuestionario() {
         if (e) e.preventDefault();
         setLoading(true);
         setError(null);
+        establecerIndiceMensaje(0);
+        establecerProgresoAnalisis(15);
+
+        const temporizadorMensajes = setInterval(() => {
+            establecerIndiceMensaje((previo) => (previo + 1) % MENSAJES_ANALISIS.length);
+            establecerProgresoAnalisis((previo) => Math.min(92, previo + 22));
+        }, 750);
+
+        const esperaMinima = new Promise((resolver) => setTimeout(resolver, 3000));
 
         try {
-            const response = await fetch('/api/cuestionario', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    relacion: formData.relacion,
-                    edad: parseInt(formData.edad) || 18,
-                    ocasion: formData.ocasion || 'Ocasión especial',
-                    pasatiempos: formData.pasatiempos || 'General',
-                    personalidad: formData.personalidad || 'Alegre',
-                    objetoQuerido: formData.objetoQuerido || '',
-                    objetoNoquerido: formData.objetoNoquerido || '',
-                    presupuesto: parseFloat(formData.presupuesto) || 0,
-                    dias: parseInt(formData.dias) || 1
-                })
-            });
+            const [response] = await Promise.all([
+                fetch('/api/cuestionario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        relacion: formData.relacion,
+                        edad: parseInt(formData.edad) || 18,
+                        ocasion: formData.ocasion || 'Ocasión especial',
+                        pasatiempos: formData.pasatiempos || 'General',
+                        personalidad: formData.personalidad || 'Alegre',
+                        objetoQuerido: formData.objetoQuerido || '',
+                        objetoNoquerido: formData.objetoNoquerido || '',
+                        presupuesto: parseFloat(formData.presupuesto) || 0,
+                        dias: parseInt(formData.dias) || 1
+                    })
+                }),
+                esperaMinima
+            ]);
 
             const rawText = await response.text();
             let data = null;
@@ -138,6 +177,8 @@ export default function Cuestionario() {
                 throw new Error(data?.error || validationError || 'Error al guardar el cuestionario.');
             }
 
+            establecerProgresoAnalisis(100);
+            establecerRecomendaciones(generarRecomendaciones(formData));
             setResultado(data);
 
             if (data.esAnonimo && data.mostrarModalPendientes) {
@@ -146,6 +187,7 @@ export default function Cuestionario() {
         } catch (err) {
             setError(err.message);
         } finally {
+            clearInterval(temporizadorMensajes);
             setLoading(false);
         }
     };
@@ -664,11 +706,21 @@ export default function Cuestionario() {
             {step === 'pRecomendaciones' && (
                 <div className="card border rounded-4 p-4 p-md-5 bg-white shadow-sm text-center">
                     {loading ? (
-                        <div className="py-4">
+                        <div className="py-5">
                             <div className="google-spinner"></div>
                             <h4 className="fw-bold mb-2 text-dark">Procesando respuestas...</h4>
+                            <p className="text-success fw-medium small mb-3">
+                                {MENSAJES_ANALISIS[indiceMensaje]}
+                            </p>
+                            <div className="progress mx-auto mb-3" style={{ maxWidth: '380px', height: '8px' }}>
+                                <div
+                                    className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                    role="progressbar"
+                                    style={{ width: `${progresoAnalisis}%` }}
+                                ></div>
+                            </div>
                             <p className="text-muted small mb-0" style={{ maxWidth: '420px', margin: '0 auto' }}>
-                                Estamos calculando y cruzando los criterios de personalidad, ocasión y presupuesto para generar tus recomendaciones ideales.
+                                Estamos cruzando criterios de personalidad, ocasión y presupuesto para encontrar tus regalos ideales.
                             </p>
                         </div>
                     ) : error ? (
@@ -713,14 +765,14 @@ export default function Cuestionario() {
                                 </div>
                             )}
 
-                            <div className="d-flex justify-content-center gap-3 flex-wrap">
+                            <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
                                 <Link to="/" className="btn btn-outline-secondary rounded-pill px-4">
                                     Ir al Inicio
                                 </Link>
                                 <button
                                     type="button"
                                     className="btn btn-outline-success rounded-pill px-4 d-inline-flex align-items-center gap-2"
-                                    onClick={compartirEnForo}
+                                    onClick={() => compartirEnForo()}
                                 >
                                     <span className="material-symbols-outlined fs-6">share</span>
                                     <span>Compartir en el Foro</span>
@@ -738,6 +790,96 @@ export default function Cuestionario() {
                                     </button>
                                 )}
                             </div>
+
+                            {recomendaciones.length > 0 && (
+                                <div className="text-start pt-4 border-top">
+                                    <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-2 mb-3">
+                                        <div>
+                                            <h5 className="fw-bold text-dark mb-1">
+                                                {recomendaciones.length} Regalos Recomendados para ti
+                                            </h5>
+                                            <p className="text-muted small mb-0">
+                                                Ordenados por compatibilidad con tu encuesta y presupuesto
+                                            </p>
+                                        </div>
+                                        <span className="badge bg-success text-white align-self-start align-self-sm-center">
+                                            {recomendaciones.length} opciones
+                                        </span>
+                                    </div>
+
+                                    <div className="row g-3">
+                                        {recomendaciones.map((producto, indice) => (
+                                            <div
+                                                key={producto.id}
+                                                className="col-12 col-md-6 tarjeta-recomendacion"
+                                                style={{ animationDelay: `${Math.min(indice * 45, 900)}ms` }}
+                                            >
+                                                <div className="card h-100 border rounded-4 p-3 bg-white shadow-sm d-flex flex-column justify-content-between">
+                                                    <div>
+                                                        <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <div
+                                                                    className="user-avatar-circle flex-shrink-0"
+                                                                    style={{ width: '40px', height: '40px' }}
+                                                                >
+                                                                    <span className="material-symbols-outlined fs-5">
+                                                                        {producto.icono}
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="badge bg-light border text-secondary small">
+                                                                        {producto.categoria}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <span className="badge bg-success-subtle text-success">
+                                                                {producto.coincidencia}% match
+                                                            </span>
+                                                        </div>
+
+                                                        <h6 className="fw-bold text-dark mb-1">{producto.nombre}</h6>
+                                                        <p className="text-muted small mb-2">{producto.razon}</p>
+
+                                                        <div className="d-flex justify-content-between align-items-center small mb-3">
+                                                            <span className="fw-bold text-dark fs-6">
+                                                                ${producto.precio} MXN
+                                                            </span>
+                                                            <span className="text-muted d-inline-flex align-items-center gap-1">
+                                                                <span className="material-symbols-outlined text-success" style={{ fontSize: '16px' }}>
+                                                                    star
+                                                                </span>
+                                                                <span>{producto.calificacion}</span>
+                                                                <span>• {producto.entrega}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="d-flex gap-2">
+                                                        <a
+                                                            href={producto.enlaceAmazon}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="btn btn-success btn-sm rounded-pill flex-grow-1 text-white d-inline-flex align-items-center justify-content-center gap-1"
+                                                        >
+                                                            <span>Ver opción</span>
+                                                            <span className="material-symbols-outlined fs-6">open_in_new</span>
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center justify-content-center gap-1"
+                                                            onClick={() => compartirEnForo(producto)}
+                                                            aria-label={`Compartir ${producto.nombre} en el foro`}
+                                                        >
+                                                            <span className="material-symbols-outlined fs-6">forum</span>
+                                                            <span>Foro</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
